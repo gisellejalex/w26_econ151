@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECON 151 Study Tool</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #6b6b6b;
+  --color-text-tertiary: #999;
+  --color-background-primary: #fff;
+  --color-background-secondary: #f8f8f6;
+  --color-border-tertiary: rgba(0,0,0,0.12);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-text-primary: #e8e8e0;
+    --color-text-secondary: #9a9a8e;
+    --color-text-tertiary: #6b6b60;
+    --color-background-primary: #1a1a18;
+    --color-background-secondary: #242422;
+    --color-border-tertiary: rgba(255,255,255,0.12);
+  }
+}
+body {
+  font-family: 'Times New Roman', Georgia, serif;
+  background: var(--color-background-secondary);
+  color: var(--color-text-primary);
+  min-height: 100vh;
+  padding: 16px;
+}
+button { font-family: inherit; cursor: pointer; }
+input { font-family: inherit; background: var(--color-background-primary); color: var(--color-text-primary); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef } = React;
+
+const THEMES = [
+  { id: "all", label: "All" }, { id: "roles", label: "Changing Roles" }, { id: "education", label: "Education" },
+  { id: "family", label: "Family" }, { id: "violence", label: "Violence" }, { id: "wagegap", label: "Wage Gap" },
+  { id: "penalty", label: "Motherhood" }, { id: "development", label: "Norms & Dev" }, { id: "sogie", label: "SOGIE" },
+];
+
+const LEARN_CONTENT = [
+  { theme: "roles", title: "The Changing Economic Roles of Men and Women", week: "Week 1", content: [
+    { heading: "Goldin (2006) \u2014 The Quiet Revolution", points: [
+      "Phase I (1800s\u20131920s): Young unmarried women in manufacturing/domestic service. Strong negative income effect from husband\u2019s earnings. Marriage = exit from labor force.",
+      "Phase II (1930s\u20131950): Expansion of clerical/office jobs, high school education, household appliances, decline of marriage bars. Married women begin entering.",
+      "Phase III (1950s\u20131970s): Rapid growth in married women\u2019s LFP, but still \u2018secondary workers\u2019 \u2014 accommodated husband\u2019s career, underestimated future work, chose low-advancement jobs.",
+      "Phase IV (late 1970s\u2013present): THE REVOLUTION. Changed expectations about lifelong work \u2192 more education, better majors, professional training, delayed marriage. Work became identity.",
+      "Key mechanism: younger women observed older cohorts\u2019 unexpected long-term attachment and upgraded investments. The Pill helped. Income and substitution elasticities both declined as work became identity."
+    ]},
+    { heading: "Coile & Duggan (2019) \u2014 When Labor\u2019s Lost", points: [
+      "Declining economic opportunity for low-skilled men \u2192 rising mortality (overdoses, suicides), disability, family instability, incarceration.",
+      "Education is the key protective factor. Median male earnings flat since early 1970s.",
+      "Declining military service = reduced source of training and structure for non-college men."
+    ]}
+  ]},
+  { theme: "education", title: "Educational Gender Gaps", week: "Week 2", content: [
+    { heading: "Goldin, Katz & Kuziemko (2006) \u2014 College Gender Gap", points: [
+      "~40% of female college advantage explained by HS preparation (mainly grades). Rest = behavioral/aspirational gaps.",
+      "1957: families favored sons at low SES. 1992: women ahead at ALL SES levels, advantage largest at low SES.",
+      "Falling barriers for women exposed boys\u2019 pre-existing school problems."
+    ]},
+    { heading: "Boys\u2019 Underperformance Debate", points: [
+      "Reeves (2022): brain development (biology). Recommends redshirting.",
+      "DiPrete & Buchmann (2006): masculine \u2018oppositional culture\u2019 \u2014 rejection of school values reinforced by peers. Social norms.",
+      "Lundberg (2020): Add Health data. Aspiration gap unexplained by skills, behavior, or family. Gender itself is the predictor.",
+      "Course position: innate framing is \u2018probably a mistake\u2019 and \u2018may be misleading for interventions.\u2019"
+    ]},
+    { heading: "Brenoe & Z\u00f6litz (2020) \u2014 Female Peers and STEM", points: [
+      "Danish admin data, 182K students, cohort-by-school FE, 20-year follow-up.",
+      "+10pp female peers \u2192 \u22126.4% women\u2019s STEM, +2.4% men\u2019s, +17% gender gap. Long-run: \u22124% STEM jobs, +5% wage gap.",
+      "SURPRISING: more female presence reinforces stereotypes, not reduces them.",
+      "KEY MODERATOR: effect vanishes for women whose mothers have STEM degrees. Role models override peers.",
+      "Contradicts Beaman et al. (2012) who found female village leaders in India RAISED girls\u2019 aspirations. Resolution: peers \u2260 role models; context (egalitarian vs. restrictive) and age (adolescent vs. adult) matter."
+    ]}
+  ]},
+  { theme: "family", title: "Family Economics, Bargaining, and Divorce", week: "Weeks 3\u20135", content: [
+    { heading: "Benefits of Marriage", points: [
+      "5 gains: economies of scale, specialization & exchange, household public goods, risk-pooling, consumption externalities.",
+      "Becker: women\u2019s \u2018heavy biological commitment to children\u2019 gives comparative advantage at home. Reinforced by skill investments. [Course dismantles this.]"
+    ]},
+    { heading: "Unitary Model \u2192 Bargaining", points: [
+      "Unitary model: family = single decision-maker, income pooling. Rejected empirically.",
+      "Divorce-threat (McElroy & Horney 1981): threat point = utility if divorced. Depends on remarriage, welfare, labor market.",
+      "Separate spheres (Lundberg & Pollak 1993): threat point = noncooperative equilibrium WITHIN marriage. Depends on income control.",
+      "LPW (1997): UK child benefit transfer from fathers to mothers \u2192 shift toward women\u2019s/children\u2019s clothing. Rejects pooling.",
+      "Duflo (2000): SA grandmother pensions \u2192 improved child health (esp. girls). Grandfather pensions \u2192 no effect. Girls bridged ~half gap with American girls.",
+      "Thomas (1990): mother\u2019s income effect on child survival 20x larger than father\u2019s."
+    ]},
+    { heading: "Divorce", points: [
+      "Stevenson & Wolfers (2007): 1970s spike from unilateral divorce + women\u2019s employment surprise. Decline since = adjustment + rising marriage age.",
+      "Economists expected no effect (Coase). Wrong short-run (much cheaper). Partially right long-run.",
+      "Unilateral divorce also reduced marriage rates, specialization, possibly DV and female suicide.",
+      "Halla (2013): joint custody increased marriage, fertility, men\u2019s wellbeing. Wong (2014, 2016): homemaker\u2019s provision increased specialization and marriage."
+    ]},
+    { heading: "Fertility Bargaining", points: [
+      "Doepke & Kindermann (2019): couples disagree; women veto more where men do less childcare. Each partner has veto power.",
+      "Policy implication: childcare subsidies > cash bonuses because they reduce mothers\u2019 specific costs."
+    ]}
+  ]},
+  { theme: "violence", title: "Intimate Partner Violence", week: "Week 5", content: [
+    { heading: "Two Models", points: [
+      "Expressive: loss of control under emotions/alcohol. Card & Dahl (2011): upset NFL loss \u2192 +10% IPV. NIBRS + betting spreads.",
+      "Instrumental: violence to control partner. Aizer (2010): narrowing CA wage gap \u2192 ~9% decline in female assault hospitalizations.",
+      "Adams et al. (2024): Finnish data, track abusers across partners. Earnings fall IMMEDIATELY upon cohabiting \u2014 even for non-reporting partners. Bridges both motives."
+    ]},
+    { heading: "The Empowerment Paradox", points: [
+      "High-income countries (Aizer, Anderberg): better options \u2192 LESS violence. Exit threat works.",
+      "Patriarchal countries (Jayachandran 2021): empowerment \u2192 MORE violence. Male backlash.",
+      "Moderator: credible EXIT options. Without divorce access, income without escape = provocation.",
+      "Cannot rationalize DV in cooperative bargaining model (violence is inefficient). But threat-point intuition predicts rates."
+    ]},
+    { heading: "Harassment", points: [
+      "Folke & Rickne (2022): harassment deters minority-gender workers \u2192 reinforces occupational segregation \u2192 increases wage gap.",
+      "Jayachandran: safety concerns used to restrict women\u2019s mobility. 95% of Delhi women felt unsafe in public."
+    ]}
+  ]},
+  { theme: "wagegap", title: "The Gender Wage Gap", week: "Weeks 6\u20137", content: [
+    { heading: "Blau & Kahn (2000) \u2014 The Baseline", points: [
+      "F/M ratio ~60% through 1980, ~80% by late 1990s.",
+      "Without occupation controls: ~85% unexplained. With occupation/industry: ~40% unexplained.",
+      "Is occupation a CONTROL or a MECHANISM? Adding it changes what \u2018unexplained\u2019 means."
+    ]},
+    { heading: "Preferences: Competition and Risk", points: [
+      "Niederle & Vesterlund (2011): 73% men vs 35% women chose tournament despite equal performance.",
+      "~1/3 explained by overconfidence (75% vs 43% think they\u2019re best). ~2/3 = aversion to competition itself.",
+      "Cross-cultural: reversed in matrilineal Khasi. Doesn\u2019t appear until adolescence. Socially constructed.",
+      "Nelson: risk aversion literature has publication bias, incorrect citation, stereotype-driven interpretation. Course: \u2018now ambiguous.\u2019"
+    ]},
+    { heading: "Structure: Greedy Jobs", points: [
+      "Goldin (2014): nonlinear hours-wage schedules. Workers imperfect substitutes \u2192 huge premium for long/rigid hours \u2192 penalizes mothers.",
+      "Goldin & Katz (2016): pharmacy = proof. Corporate consolidation + IT + standardization \u2192 substitutable \u2192 linear pay. Part-time penalty near zero. Female share <5% \u2192 >60%.",
+      "Ownership premium: 16% (1970) \u2192 0% today."
+    ]},
+    { heading: "Discrimination: New Generation of Studies", points: [
+      "Sarsons (2019): female surgeon referrals drop more after patient death.",
+      "Egan et al. (2022): female advisers 20% more likely fired after identical misconduct.",
+      "Babcock et al. (2017): women do more non-promotable work, asked more often.",
+      "Cullen & Perez-Truglia (2023): smoking breaks with male managers \u2192 male promotions.",
+      "Course position: all three explanations interact, but preferences alone are insufficient."
+    ]}
+  ]},
+  { theme: "penalty", title: "The Motherhood Wage Penalty", week: "Week 7", content: [
+    { heading: "Kleven et al. (2019) \u2014 The Event Study", points: [
+      "Danish admin data, 470K births, 15M person-years. Event study around first child.",
+      "Women: ~30% immediate drop, stabilizes at ~20% after 10 years (same at 20). Men: ~0%.",
+      "Mechanisms: employment exit, reduced hours, wage cuts, public sector switch, mommy-tracking.",
+      "Cross-country variation driven by gender ATTITUDES, not policy. Grandmother\u2019s work predicts daughter\u2019s penalty."
+    ]},
+    { heading: "Biology Ruled Out", points: [
+      "Kleven et al. (2021): adoptive vs. biological parents. No long-run difference. Biology doesn\u2019t explain it.",
+      "Andresen & Nix (2022): same-sex female couples \u2192 smaller, more equal penalties. Both mothers reduce earnings.",
+      "Together: \u2018cannot be understood through biology and incentive-based specialization.\u2019"
+    ]},
+    { heading: "Policy Fails (Mostly)", points: [
+      "Kleven (Austria, 2024): leave up to 30 months + childcare expansion. Penalty: ZERO. Fertility: ZERO. Why: leave too long, childcare crowds out informal care, strong norms.",
+      "Norway childcare: also zero (crowded out grandparents). Quebec: YES, increased employment.",
+      "Cross-paper synthesis: Goldin says restructure jobs (demand side). Kleven says policy fails (supply side). Both agree norms are binding constraint."
+    ]}
+  ]},
+  { theme: "development", title: "Gender, Norms, and Economic Development", week: "Weeks 8\u20139", content: [
+    { heading: "Jayachandran (2021) \u2014 Five Barriers", points: [
+      "Safety, restricted mobility, money control, male backlash, domestic burden.",
+      "Religion: Hindu caste (pollution), Muslim purdah (seclusion). Explains South Asia/Middle East.",
+      "Paid employment confers power; unpaid home work does not. Consistent with bargaining models."
+    ]},
+    { heading: "Bursztyn et al. (2020) \u2014 Saudi Pluralistic Ignorance", points: [
+      "500 men, Riyadh. 87% support WWOH but guess only 63%. 72% underestimate.",
+      "Treatment (correct info): job signup +36%, wife applications +180% at 3\u20135 months.",
+      "Misperceptions correlate with lack of discussion. Information provision works.",
+      "Policy: especially important in less democratic societies lacking information aggregators."
+    ]},
+    { heading: "Field et al. (2021) \u2014 India Bank Accounts", points: [
+      "RCT in Madhya Pradesh. Direct deposit \u2192 increased women\u2019s work (esp. previously non-working).",
+      "Women\u2019s attitudes shifted. Men\u2019s OWN attitudes didn\u2019t change, but perception of community norms shifted.",
+      "Designed to make earnings less visible to husbands \u2014 to avoid backlash."
+    ]},
+    { heading: "Deep Roots and Cautions", points: [
+      "Alesina et al. (2013): historical plough suitability \u2192 lower female employment TODAY.",
+      "Duflo (2012): empowerment \u2192 growth link \u2018not transformational.\u2019 Pursue equality as a value, not instrumentally."
+    ]}
+  ]},
+  { theme: "sogie", title: "Sexual Orientation and Gender Identity", week: "Week 10", content: [
+    { heading: "Badgett et al. (2024) \u2014 Four Stylized Facts", points: [
+      "1. Gay penalty: men earn less. 2. Lesbian premium: women earn more. 3. Trans individuals earn less. 4. Bisexual often worst outcomes.",
+      "Data challenges: disclosure bias, small samples, couples-only ID misses single LGBTQ+."
+    ]},
+    { heading: "Connections to Course Frameworks", points: [
+      "Gay penalty \u2192 masculinity norm violation. Connects to boys\u2019 education, men avoiding female-coded jobs.",
+      "Lesbian premium \u2192 less specialization, continuous work, fewer child interruptions.",
+      "Schilt & Wiswall (2008): cleanest discrimination test. Within-person before/after transition. Trans women: penalties. Trans men: gains.",
+      "Carpenter & Sansone (2020): gay men underrepresented in STEM, mirroring women. Gender norms operate through masculinity broadly."
+    ]},
+    { heading: "Same-Sex Couples as Natural Test", points: [
+      "Andresen & Nix (2022): smaller, more equal child penalties in same-sex couples.",
+      "SOGIE slides: same-sex couples are dual-earner, less specialized. Becker\u2019s biological model fails.",
+      "Last Class: same-sex couples\u2019 lower specialization is \u2018very revealing\u2019 \u2014 shows different-sex specialization = gender norms, not comparative advantage.",
+      "This is the final nail in Becker\u2019s framework across the entire course."
+    ]}
+  ]},
+];
+
+const FLASHCARDS = [
+  { theme:"roles", front:"Goldin (2006): What are the 4 phases?", back:"I: Young unmarried, manufacturing. II: Clerical expansion, married enter. III: Rapid growth, still secondary. IV: REVOLUTION \u2014 changed expectations, career investment, delayed marriage." },
+  { theme:"roles", front:"Why is Phase IV \u2018revolutionary\u2019?", back:"EXPECTATIONS changed, not just labor supply. Women planned lifelong careers \u2192 upstream changes in education, occupation, marriage timing." },
+  { theme:"roles", front:"Coile & Duggan (2019)?", back:"Declining opportunity for low-skilled men \u2192 mortality, disability, family instability. Education = key protective factor." },
+  { theme:"education", front:"GKK (2006): How much explained?", back:"~40% by HS preparation (mainly grades). Rest = behavioral/aspirational gaps." },
+  { theme:"education", front:"Reeves vs DiPrete & Buchmann?", back:"Reeves: brain development (bio). D&B: oppositional culture (norms). Course: innate framing \u2018probably a mistake.\u2019" },
+  { theme:"education", front:"Lundberg (2020): Aspiration gap?", back:"Add Health data. Kitchen-sink regressions explain 25\u201330%. Gap = GENDER ITSELF." },
+  { theme:"education", front:"Brenoe & Z\u00f6litz (2020)?", back:"+10pp female peers \u2192 \u22126.4% women\u2019s STEM, +2.4% men\u2019s, +17% gap. Vanishes if mother in STEM." },
+  { theme:"education", front:"B&Z identification strategy?", back:"Random cohort variation within school. School FE, cohort FE, cohort\u00d7school FE. 182K students, 20yr follow-up." },
+  { theme:"family", front:"5 benefits of marriage?", back:"Economies of scale, specialization, household public goods, risk-pooling, consumption externalities." },
+  { theme:"family", front:"Unitary model: pooling?", back:"Source doesn\u2019t matter. WRONG: LPW 1997 shifted spending. Duflo 2000 grandmother \u2260 grandfather. Thomas 1990 mother 20x." },
+  { theme:"family", front:"Divorce-threat vs separate spheres?", back:"Divorce-threat: threat = utility if divorced. Separate spheres: threat = noncooperative equilibrium WITHIN marriage." },
+  { theme:"family", front:"Duflo (2000)?", back:"Grandmother pension \u2192 child health (esp girls). Grandfather \u2192 nothing. Bridged ~half gap with American girls." },
+  { theme:"family", front:"Doepke & Kindermann (2019)?", back:"Women veto children where men do less childcare. Veto power. Childcare subsidies > cash bonuses." },
+  { theme:"family", front:"1970s divorce spike causes?", back:"Unilateral divorce (cheaper). Women\u2019s employment (surprise). Mixed-gender workplaces (partner search)." },
+  { theme:"violence", front:"Card & Dahl (2011)?", back:"Upset NFL loss \u2192 +10% IPV. NIBRS + betting spreads. Expressive model." },
+  { theme:"violence", front:"Aizer (2010)?", back:"CA wage gap narrowing \u2192 ~9% decline in female assault. Predicted wages. Bargaining/exit model." },
+  { theme:"violence", front:"Adams et al. (2024)?", back:"Finnish data. Abusers\u2019 partners lose earnings IMMEDIATELY. Even non-reporting partners. Bridges both motives." },
+  { theme:"violence", front:"Empowerment\u2013violence paradox?", back:"Rich countries: options \u2192 less IPV. Patriarchal: empowerment \u2192 more IPV. Moderator: exit options." },
+  { theme:"wagegap", front:"Blau & Kahn (2000) numbers?", back:"F/M ~80%. No occupation: ~85% unexplained. With occupation: ~40% unexplained." },
+  { theme:"wagegap", front:"N&V (2011) tournament?", back:"73% men vs 35% women chose tournament. 1/3 = overconfidence. 2/3 = competition aversion." },
+  { theme:"wagegap", front:"Competition aversion \u2014 social?", back:"Reversed in Khasi (matrilineal). Absent until adolescence. Team competition reduces gap." },
+  { theme:"wagegap", front:"Nelson on risk aversion?", back:"Publication bias, incorrect citation, selective emphasis. Course: \u2018now ambiguous.\u2019" },
+  { theme:"wagegap", front:"Goldin (2014): greedy jobs?", back:"Nonlinear hours-wage. Imperfect substitutes. Penalizes flexibility (mothers)." },
+  { theme:"wagegap", front:"Goldin & Katz (2016): pharmacy?", back:"Consolidation + IT + standardization \u2192 substitutable \u2192 linear pay. Part-time penalty ~0. Female <5% \u2192 >60%." },
+  { theme:"wagegap", front:"4 discrimination studies?", back:"Sarsons: surgeon referrals. Egan: punishment gap. Babcock: non-promotable work. Cullen: old boys\u2019 club." },
+  { theme:"penalty", front:"Kleven (2019) numbers?", back:"~30% immediate, ~20% at 10yr. Men ~0%. Penalty = 19.4%. Variation = attitudes, not policy." },
+  { theme:"penalty", front:"Kleven (2021): biology?", back:"Adoptive = biological. No long-run diff. Cannot be understood through biology." },
+  { theme:"penalty", front:"Kleven (Austria 2024)?", back:"30-month leave + childcare. Penalty: ZERO. Fertility: ZERO. Norms too strong." },
+  { theme:"penalty", front:"Goldin vs Kleven?", back:"Goldin: restructure jobs. Kleven: policy fails. Different levers. Norms = binding constraint." },
+  { theme:"development", front:"Jayachandran (2021): 5 barriers?", back:"Safety, mobility, money control, backlash, domestic burden." },
+  { theme:"development", front:"Bursztyn (2020): Saudi numbers?", back:"87% support WWOH, guess 63%. Treatment: signup +36%, applications +180%." },
+  { theme:"development", front:"Pluralistic ignorance?", back:"Most hold opinion X but think others hold not-X. Act against own view. Correcting beliefs about OTHERS works." },
+  { theme:"development", front:"Field et al. (2021)?", back:"India RCT. Direct deposit \u2192 more work. Men\u2019s attitudes stable but community norm perceptions shifted." },
+  { theme:"development", front:"Duflo (2012)?", back:"Empowerment \u2192 growth \u2018not transformational.\u2019 Equality as fundamental objective." },
+  { theme:"sogie", front:"Badgett et al. (2024): 4 facts?", back:"Gay penalty. Lesbian premium. Trans penalty. Bisexual worst." },
+  { theme:"sogie", front:"Schilt & Wiswall (2008)?", back:"Within-person before/after transition. Trans women: penalties. Trans men: gains. Cleanest discrimination test." },
+  { theme:"sogie", front:"Andresen & Nix (2022)?", back:"Same-sex couples: smaller, shared child penalties. Both mothers reduce. Confirms norms, not biology." },
+  { theme:"sogie", front:"Why is lower specialization \u2018very revealing\u2019?", back:"If Becker right, one would still specialize. They don\u2019t. Reveals specialization = gender norms." },
+];
+
+const QUIZ_QUESTIONS = [
+  { theme:"roles", question:"What distinguishes Phase IV in Goldin\u2019s framework?", options:["Wages rose faster","Changed expectations about lifelong careers","Government mandated equal pay","College quotas"], answer:1 },
+  { theme:"education", question:"Brenoe & Z\u00f6litz: +10pp female peers caused:", options:["+6.4% women STEM","\u22126.4% women STEM, +2.4% men","No effect","Equal reductions"], answer:1 },
+  { theme:"education", question:"Lundberg (2020) aspiration gap explained by:", options:["Cognitive skills","Family background","School performance","None \u2014 unexplained"], answer:3 },
+  { theme:"family", question:"LPW (1997) UK child benefit found:", options:["No change","Shift to men\u2019s clothing","Shift to women\u2019s/children\u2019s clothing","More savings"], answer:2 },
+  { theme:"family", question:"Duflo (2000): which pensions helped children?", options:["Both","Grandfather","Grandmother (esp. girls)","Neither"], answer:2 },
+  { theme:"violence", question:"Card & Dahl: upset NFL loss \u2192", options:["\u22125% IPV","+10% male-on-female IPV","+25% all violence","No change"], answer:1 },
+  { theme:"violence", question:"Empowerment\u2013violence moderator:", options:["Development","Exit options","Employment type","Age"], answer:1 },
+  { theme:"wagegap", question:"Overconfidence explains what of N&V gap?", options:["All","~2/3","~1/3","None"], answer:2 },
+  { theme:"wagegap", question:"Pharmacy\u2019s small gap due to:", options:["Affirmative action","Substitutability","Women\u2019s education","Regulation"], answer:1 },
+  { theme:"wagegap", question:"Nelson on risk aversion literature:", options:["Women more risk averse","Publication + stereotype bias","Irrelevant","Men more risk averse"], answer:1 },
+  { theme:"penalty", question:"Child penalty stabilizes at:", options:["\u22125% at 5yr","\u221210% at 10yr","\u221220% at 10yr","\u221240% at 20yr"], answer:2 },
+  { theme:"penalty", question:"Adoptive vs biological (Kleven 2021):", options:["Bio larger","Adoptive larger","No long-run diff","Both zero"], answer:2 },
+  { theme:"penalty", question:"Austria 30-month leave effect:", options:["Reduced 15%","Reduced 5%","Zero","Increased"], answer:2 },
+  { theme:"development", question:"Saudi men supporting WWOH:", options:["~50%","~63%","~87%","~95%"], answer:2 },
+  { theme:"development", question:"Field et al. India:", options:["Changed men\u2019s attitudes","No effect","Increased work + shifted perceptions","Only prior workers"], answer:2 },
+  { theme:"sogie", question:"Schilt & Wiswall post-transition:", options:["Both penalized","Trans women penalized, trans men gained","No changes","Both gained"], answer:1 },
+  { theme:"sogie", question:"Same-sex lower specialization reveals:", options:["Less productive","Norms drive specialization","Becker correct","Less childcare"], answer:1 },
+  { theme:"family", question:"Doepke & Kindermann: women disagree where:", options:["Women earn more","Men do less childcare","High fertility","Baby bonuses"], answer:1 },
+  { theme:"wagegap", question:"Cullen & Perez-Truglia smoking breaks:", options:["No effect","Equal promotions","Higher male promotions","Less productivity"], answer:2 },
+  { theme:"development", question:"Duflo (2012) empowerment\u2192growth:", options:["Very strong","Not strong, equality as value","Negative","Only rich countries"], answer:1 },
+];
+
+const MATCHUP_ITEMS = [
+  { paper:"Goldin (2006)", match:"4 phases; Phase IV = revolution in expectations" },
+  { paper:"Blau & Kahn (2000)", match:"F/M ~80%, ~40% unexplained with occupation" },
+  { paper:"Kleven et al. (2019)", match:"~20% child penalty for mothers, ~0% for fathers" },
+  { paper:"Card & Dahl (2011)", match:"Upset NFL loss \u2192 +10% IPV" },
+  { paper:"Bursztyn et al. (2020)", match:"87% Saudi men support WWOH, guess 63%" },
+  { paper:"N & V (2011)", match:"73% vs 35% tournament; 1/3 overconfidence" },
+  { paper:"Duflo (2000)", match:"Grandmother pension \u2192 child health; grandfather \u2192 nothing" },
+  { paper:"Brenoe & Z\u00f6litz (2020)", match:"+10pp female peers \u2192 \u22126.4% women STEM" },
+  { paper:"Goldin & Katz (2016)", match:"Pharmacy: substitutability \u2192 linear pay, tiny gap" },
+  { paper:"Adams et al. (2024)", match:"Abusers\u2019 partners lose earnings immediately" },
+  { paper:"Kleven et al. (2021)", match:"Adoptive = biological; biology \u2260 penalty" },
+  { paper:"Field et al. (2021)", match:"India bank accounts \u2192 work + shifted norms" },
+  { paper:"Andresen & Nix (2022)", match:"Same-sex couples: smaller, shared penalties" },
+  { paper:"Schilt & Wiswall (2008)", match:"Trans women penalized, trans men gain" },
+  { paper:"Aizer (2010)", match:"CA wage gap \u2192 9% less female assault" },
+  { paper:"LPW (1997)", match:"UK benefit to mothers \u2192 women\u2019s/children\u2019s clothing" },
+];
+
+const NUMBER_BLITZ = [
+  { q:"F/M earnings ratio through 1980?", a:"~60%", accept:["60","60%"] },
+  { q:"F/M ratio late 1990s?", a:"~80%", accept:["80","80%"] },
+  { q:"Unexplained gap WITHOUT occupation?", a:"~85%", accept:["85","85%"] },
+  { q:"Unexplained gap WITH occupation?", a:"~40%", accept:["40","40%"] },
+  { q:"Men choosing tournament (N&V)?", a:"73%", accept:["73","73%"] },
+  { q:"Women choosing tournament?", a:"35%", accept:["35","35%"] },
+  { q:"Men thinking they\u2019re best?", a:"75%", accept:["75","75%"] },
+  { q:"Women thinking they\u2019re best?", a:"43%", accept:["43","43%"] },
+  { q:"Overconfidence explains what fraction?", a:"~1/3", accept:["1/3","one third","a third","33"] },
+  { q:"Child penalty at 10yr (women)?", a:"~20%", accept:["20","20%","19.4"] },
+  { q:"Immediate drop at childbirth?", a:"~30%", accept:["30","30%"] },
+  { q:"Child penalty for men?", a:"~0%", accept:["0","0%","zero","none"] },
+  { q:"Saudi men supporting WWOH?", a:"87%", accept:["87","87%"] },
+  { q:"Saudi men\u2019s GUESS?", a:"63%", accept:["63","63%"] },
+  { q:"Saudi wife applications treatment?", a:"+180%", accept:["180","180%"] },
+  { q:"Aizer: % of assault decline?", a:"~9%", accept:["9","9%"] },
+  { q:"Card & Dahl: IPV increase?", a:"~10%", accept:["10","10%"] },
+  { q:"Thomas: mother vs father?", a:"20x", accept:["20x","20 times","20"] },
+  { q:"Pharmacy premium 1970?", a:"~16%", accept:["16","16%"] },
+  { q:"Pharmacy premium today?", a:"0%", accept:["0","0%","zero"] },
+  { q:"Austria max leave?", a:"30 months", accept:["30","30 months"] },
+  { q:"Austria effect on penalty?", a:"Zero", accept:["zero","0","none"] },
+  { q:"India: % women with say?", a:"28%", accept:["28","28%"] },
+  { q:"B&Z: +10pp on STEM?", a:"\u22126.4%", accept:["6.4","-6.4","-6.4%"] },
+];
+
+const TFU_STATEMENTS = [
+  { statement:"The motherhood penalty is primarily caused by childbirth and breastfeeding.", verdict:"False", explanation:"Kleven (2021): adoptive = biological parents. Andresen & Nix (2022): same-sex couples share penalties. Penalty = norms, not biology." },
+  { statement:"Unilateral divorce had no long-term effect on divorce rates.", verdict:"Uncertain", explanation:"Short-run: WRONG (massive spike). Long-run: fairly small effect. But other effects persisted: reduced marriage rates, less specialization, possibly less DV." },
+  { statement:"Most Saudi men oppose women working outside the home.", verdict:"False", explanation:"Bursztyn: 87% SUPPORT. Pluralistic ignorance. Correcting misperceptions \u2192 +180% wife job applications." },
+  { statement:"Women avoid competition because they underestimate ability.", verdict:"False", explanation:"Women overestimate too, just less. 1/3 = overconfidence. 2/3 = competition aversion. Khasi reversal \u2192 socially constructed." },
+  { statement:"Subsidized childcare reduces the motherhood penalty.", verdict:"Uncertain", explanation:"Austria: ZERO. Norway: zero. Quebec: YES. Depends on design, price, informal care, norms." },
+  { statement:"Same-sex couples support Becker\u2019s specialization model.", verdict:"False", explanation:"They specialize LESS even with children. Reveals norms, not comparative advantage." },
+  { statement:"Women\u2019s economic opportunities always reduce IPV.", verdict:"False", explanation:"True in rich countries with divorce. False in patriarchal settings (backlash). Moderator: exit options." },
+];
+
+const CONNECTION_PAIRS = [
+  { paper1:"Kleven et al. (2021) \u2014 adoptive vs biological", paper2:"Andresen & Nix (2022) \u2014 same-sex couples", hint:"Both dismantle Becker. Kleven removes biology. Andresen removes gender roles. Together: norms > biology." },
+  { paper1:"Goldin (2014) \u2014 greedy jobs", paper2:"Kleven (Austria, 2024) \u2014 policy fails", hint:"Different levers. Goldin: demand side (substitutability). Kleven: supply side fails. Both: norms are binding." },
+  { paper1:"Brenoe & Z\u00f6litz (2020) \u2014 peers widen gap", paper2:"Beaman et al. (2012) \u2014 leaders raise aspirations", hint:"Opposite signs. Peers = conformity. Leaders = aspiration. STEM mothers nullify. Denmark vs India." },
+  { paper1:"Aizer (2010) \u2014 wages reduce violence", paper2:"Jayachandran (2021) \u2014 empowerment increases violence", hint:"Opposite signs. Moderator: EXIT. With divorce: works. Without: provocation." },
+  { paper1:"N & V (2011) \u2014 competition aversion", paper2:"Nelson \u2014 risk aversion critique", hint:"N&V: real competition aversion. Nelson: risk aversion literature biased. Competition more robust than risk, but both may = constraints." },
+  { paper1:"Duflo (2000) \u2014 SA pensions", paper2:"LPW (1997) \u2014 UK child benefit", hint:"Both reject pooling. Different countries, same conclusion: who receives income matters." },
+  { paper1:"Bursztyn (2020) \u2014 Saudi norms", paper2:"Field (2021) \u2014 India banks", hint:"Both: norms constrain + shift via information. Men\u2019s PERCEPTION of community = lever." },
+  { paper1:"GKK (2006) \u2014 college gap", paper2:"DiPrete & Buchmann (2006) \u2014 oppositional culture", hint:"GKK: document gap, non-cognitive skills. D&B: mechanism = masculine identity rejects school." },
+];
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const F = "'Times New Roman', Georgia, serif";
+const A = "#6b4c8a"; const AL = "#f3eef8";
+const G = "#3d7a5f"; const GL = "#eaf5f0";
+const C = "#c25d4e"; const CL = "#fdf0ee";
+const W = "#b8860b"; const WL = "#fdf8ec";
+
+function pillBtn(active, color) {
+  const c = color || A;
+  return {
+    padding: "5px 14px", fontSize: 12, fontFamily: F, borderRadius: 20,
+    background: active ? c : "transparent", color: active ? "#fff" : "var(--color-text-secondary)",
+    border: active ? "1px solid " + c : "1px solid var(--color-border-tertiary)",
+    cursor: "pointer", transition: "all .2s", whiteSpace: "nowrap"
+  };
+}
+
+function Learn({ theme }) {
+  const items = theme === "all" ? LEARN_CONTENT : LEARN_CONTENT.filter(l => l.theme === theme);
+  const [openIdx, setOpenIdx] = useState(null);
+  return (
+    <div style={{ fontFamily: F }}>
+      {items.map((section, si) => (
+        <div key={si} style={{ marginBottom: 16 }}>
+          <div
+            onClick={() => setOpenIdx(openIdx === si ? null : si)}
+            style={{
+              padding: "12px 16px", borderRadius: 10, cursor: "pointer",
+              border: "1.5px solid " + (openIdx === si ? A : "var(--color-border-tertiary)"),
+              background: openIdx === si ? AL : "transparent", transition: "all .2s"
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 700 }}>{section.title}</div>
+                <div style={{ fontSize: 12, color: "var(--color-text-secondary)", fontStyle: "italic", marginTop: 2 }}>{section.week}</div>
+              </div>
+              <div style={{ fontSize: 18, color: A }}>{openIdx === si ? "\u2212" : "+"}</div>
+            </div>
+          </div>
+          {openIdx === si && (
+            <div style={{ padding: "12px 16px 4px", borderLeft: "2px solid " + A, marginLeft: 16, marginTop: 8 }}>
+              {section.content.map((block, bi) => (
+                <div key={bi} style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: A, marginBottom: 6 }}>{block.heading}</div>
+                  {block.points.map((pt, pi) => (
+                    <div key={pi} style={{ fontSize: 13, lineHeight: 1.7, marginBottom: 6, paddingLeft: 12, borderLeft: "1px solid #ddd" }}>
+                      {pt}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Pomodoro() {
+  const [mode, setMode] = useState("work");
+  const [timeLeft, setTimeLeft] = useState(1500);
+  const [running, setRunning] = useState(false);
+  const [sessions, setSessions] = useState(0);
+  const ref = useRef(null);
+  useEffect(() => {
+    if (running) {
+      ref.current = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) { clearInterval(ref.current); setRunning(false);
+            if (mode === "work") { setSessions(s => s + 1); setMode("break"); return 300; }
+            else { setMode("work"); return 1500; }
+          } return prev - 1;
+        });
+      }, 1000);
+    } return () => clearInterval(ref.current);
+  }, [running, mode]);
+  const mins = Math.floor(timeLeft / 60), secs = timeLeft % 60;
+  const total = mode === "work" ? 1500 : 300;
+  const pct = ((total - timeLeft) / total) * 100;
+  return (
+    <div style={{ textAlign: "center", padding: "2rem 1rem" }}>
+      <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 2.5, color: "var(--color-text-secondary)", marginBottom: 12, fontFamily: F }}>{mode === "work" ? "\u2727 focus session \u2727" : "\u2615 break time \u2615"}</div>
+      <div style={{ fontSize: 56, fontWeight: 400, fontFamily: F, letterSpacing: 2 }}>{String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}</div>
+      <div style={{ height: 3, background: "#e8e8e0", borderRadius: 2, margin: "16px auto", maxWidth: 220 }}><div style={{ height: 3, borderRadius: 2, width: pct + "%", background: mode === "work" ? A : G, transition: "width 1s linear" }} /></div>
+      <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 16 }}>
+        <button onClick={() => setRunning(!running)} style={{ padding: "8px 24px", fontSize: 13, fontFamily: F, borderRadius: 20, border: "1px solid var(--color-border-tertiary)", background: running ? CL : "transparent", cursor: "pointer" }}>{running ? "Pause" : "Start"}</button>
+        <button onClick={() => { setRunning(false); setTimeLeft(mode === "work" ? 1500 : 300); }} style={{ padding: "8px 24px", fontSize: 13, fontFamily: F, borderRadius: 20, border: "1px solid var(--color-border-tertiary)", cursor: "pointer" }}>Reset</button>
+      </div>
+      <div style={{ fontSize: 13, color: "var(--color-text-secondary)", marginTop: 14, fontFamily: F, fontStyle: "italic" }}>{sessions} session{sessions !== 1 ? "s" : ""} done</div>
+    </div>
+  );
+}
+
+function Flashcards({ cards }) {
+  const [deck, setDeck] = useState(() => shuffle(cards));
+  const [idx, setIdx] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [known, setKnown] = useState(0);
+  useEffect(() => { setDeck(shuffle(cards)); setIdx(0); setFlipped(false); setKnown(0); }, [cards]);
+  const card = deck[idx];
+  if (!card) return <div style={{ padding: 24, textAlign: "center", fontFamily: F, fontStyle: "italic", color: "var(--color-text-secondary)" }}>No cards for this filter.</div>;
+  const next = (gotIt) => { if (gotIt) setKnown(k => k + 1); setFlipped(false); if (idx + 1 >= deck.length) { setDeck(shuffle(cards)); setIdx(0); } else setIdx(i => i + 1); };
+  return (
+    <div>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--color-text-secondary)", marginBottom: 10, fontFamily: F, fontStyle: "italic" }}><span>Card {idx + 1}/{deck.length}</span><span>{known} mastered</span></div>
+      <div onClick={() => setFlipped(!flipped)} style={{ minHeight: 200, padding: "2rem 1.5rem", cursor: "pointer", borderRadius: 14, border: "1.5px solid " + (flipped ? G : A), background: flipped ? GL : AL, transition: "all .3s", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ textAlign: "center", maxWidth: 520 }}>
+          <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 2, color: flipped ? G : A, marginBottom: 14, fontFamily: F }}>{flipped ? "\u2713 answer" : "\u2753 question"} \u00b7 tap to flip</div>
+          <div style={{ fontSize: 15, lineHeight: 1.7, fontFamily: F }}>{flipped ? card.back : card.front}</div>
+        </div>
+      </div>
+      {flipped && <div style={{ display: "flex", gap: 8, marginTop: 14, justifyContent: "center" }}>
+        <button onClick={() => next(false)} style={{ ...pillBtn(false, C), color: C, borderColor: C }}>Still learning</button>
+        <button onClick={() => next(true)} style={{ ...pillBtn(false, G), color: G, borderColor: G }}>Got it \u2713</button>
+      </div>}
+    </div>
+  );
+}
+
+function Quiz({ questions }) {
+  const [qs, setQs] = useState(() => shuffle(questions).slice(0, Math.min(10, questions.length)));
+  const [idx, setIdx] = useState(0); const [sel, setSel] = useState(null); const [showR, setShowR] = useState(false);
+  const [score, setScore] = useState(0); const [done, setDone] = useState(false); const [ans, setAns] = useState([]);
+  const restart = useCallback(() => { setQs(shuffle(questions).slice(0, Math.min(10, questions.length))); setIdx(0); setSel(null); setShowR(false); setScore(0); setDone(false); setAns([]); }, [questions]);
+  useEffect(() => { restart(); }, [questions, restart]);
+  if (done) return (
+    <div style={{ textAlign: "center", padding: "2rem", fontFamily: F }}>
+      <div style={{ fontSize: 48 }}>{score}/{qs.length}</div>
+      <div style={{ fontSize: 14, color: "var(--color-text-secondary)", fontStyle: "italic", marginBottom: 20 }}>{Math.round(score / qs.length * 100)}%</div>
+      {ans.filter(a => !a.c).length > 0 && <div style={{ textAlign: "left", marginBottom: 20 }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: C, marginBottom: 10, fontStyle: "italic" }}>Review:</div>
+        {ans.filter(a => !a.c).map((a, i) => <div key={i} style={{ fontSize: 13, marginBottom: 10, padding: 12, borderRadius: 10, background: CL, fontFamily: F }}><div style={{ fontWeight: 700, marginBottom: 4 }}>{a.q}</div><div style={{ color: C }}>You: {a.y}</div><div style={{ color: G }}>Correct: {a.r}</div></div>)}
+      </div>}
+      <button onClick={restart} style={pillBtn(true, A)}>New quiz</button>
+    </div>
+  );
+  const q = qs[idx];
+  const submit = () => { if (sel === null) return; const c2 = sel === q.answer; if (c2) setScore(s => s + 1); setAns(a => [...a, { q: q.question, c: c2, y: q.options[sel], r: q.options[q.answer] }]); setShowR(true); };
+  return (
+    <div style={{ fontFamily: F }}>
+      <div style={{ fontSize: 12, color: "var(--color-text-secondary)", marginBottom: 14, fontStyle: "italic" }}>Q {idx + 1}/{qs.length} \u00b7 Score: {score}/{idx + (showR ? 1 : 0)}</div>
+      <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 18, lineHeight: 1.6 }}>{q.question}</div>
+      {q.options.map((opt, i) => { let bg = "transparent", bd = "var(--color-border-tertiary)"; if (showR && i === q.answer) { bg = GL; bd = G; } else if (showR && i === sel && i !== q.answer) { bg = CL; bd = C; } else if (!showR && i === sel) { bg = AL; bd = A; } return <div key={i} onClick={() => !showR && setSel(i)} style={{ padding: "10px 14px", marginBottom: 8, borderRadius: 10, fontSize: 14, lineHeight: 1.6, fontFamily: F, border: "1.5px solid " + bd, background: bg, cursor: showR ? "default" : "pointer", transition: "all .2s" }}>{opt}</div>; })}
+      <div style={{ marginTop: 14, textAlign: "center" }}>{!showR ? <button onClick={submit} disabled={sel === null} style={{ ...pillBtn(true, A), opacity: sel === null ? 0.4 : 1 }}>Check</button> : <button onClick={() => { setSel(null); setShowR(false); if (idx + 1 >= qs.length) setDone(true); else setIdx(i => i + 1); }} style={pillBtn(true, G)}>{idx + 1 >= qs.length ? "Results" : "Next \u2192"}</button>}</div>
+    </div>
+  );
+}
+
+function Matchup() {
+  const [items, setItems] = useState(() => { const s = shuffle(MATCHUP_ITEMS).slice(0, 6); return { papers: shuffle(s.map(x => x.paper)), findings: shuffle(s.map(x => x.match)), correct: Object.fromEntries(s.map(x => [x.paper, x.match])) }; });
+  const [selP, setSelP] = useState(null); const [matched, setMatched] = useState({}); const [wrong, setWrong] = useState(null);
+  const hf = (f) => { if (!selP) return; if (items.correct[selP] === f) { setMatched(m => ({ ...m, [selP]: f })); setSelP(null); setWrong(null); } else { setWrong(f); setTimeout(() => setWrong(null), 800); } };
+  const isDone = Object.keys(matched).length === items.papers.length;
+  const restart = () => { const s = shuffle(MATCHUP_ITEMS).slice(0, 6); setItems({ papers: shuffle(s.map(x => x.paper)), findings: shuffle(s.map(x => x.match)), correct: Object.fromEntries(s.map(x => [x.paper, x.match])) }); setMatched({}); setSelP(null); setWrong(null); };
+  if (isDone) return <div style={{ textAlign: "center", padding: "2rem", fontFamily: F }}><div style={{ fontSize: 28 }}>All matched! \u2727</div><div style={{ fontSize: 14, color: "var(--color-text-secondary)", fontStyle: "italic", margin: "8px 0 16px" }}>6/6</div><button onClick={restart} style={pillBtn(true, A)}>Play again</button></div>;
+  return (
+    <div style={{ fontFamily: F }}>
+      <div style={{ fontSize: 12, color: "var(--color-text-secondary)", fontStyle: "italic", marginBottom: 12 }}>Tap paper, then finding. {Object.keys(matched).length}/6</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        <div><div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 2, color: A, marginBottom: 8 }}>Papers</div>
+          {items.papers.map(p => { const m = matched[p]; return <div key={p} onClick={() => !m && setSelP(p)} style={{ padding: "8px 10px", marginBottom: 6, borderRadius: 8, fontSize: 12, lineHeight: 1.4, fontFamily: F, border: "1.5px solid " + (m ? G : selP === p ? A : "var(--color-border-tertiary)"), background: m ? GL : selP === p ? AL : "transparent", cursor: m ? "default" : "pointer", opacity: m ? 0.6 : 1, transition: "all .2s" }}>{p}{m && " \u2713"}</div>; })}</div>
+        <div><div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 2, color: W, marginBottom: 8 }}>Findings</div>
+          {items.findings.map(f => { const m = Object.values(matched).includes(f); return <div key={f} onClick={() => hf(f)} style={{ padding: "8px 10px", marginBottom: 6, borderRadius: 8, fontSize: 11, lineHeight: 1.4, fontFamily: F, border: "1.5px solid " + (m ? G : wrong === f ? C : "var(--color-border-tertiary)"), background: m ? GL : wrong === f ? CL : "transparent", cursor: m ? "default" : "pointer", opacity: m ? 0.6 : 1, transition: "all .2s" }}>{f}{m && " \u2713"}</div>; })}</div>
+      </div>
+    </div>
+  );
+}
+
+function NumberBlitz() {
+  const [qs] = useState(() => shuffle(NUMBER_BLITZ));
+  const [idx, setIdx] = useState(0); const [input, setInput] = useState(""); const [score, setScore] = useState(0); const [total, setTotal] = useState(0);
+  const [feedback, setFeedback] = useState(null); const [timeLeft, setTimeLeft] = useState(60); const [running, setRunning] = useState(false); const [done, setDone] = useState(false);
+  const ref = useRef(null); const iref = useRef(null);
+  useEffect(() => { if (running && timeLeft > 0) { ref.current = setInterval(() => setTimeLeft(t => { if (t <= 1) { clearInterval(ref.current); setDone(true); setRunning(false); return 0; } return t - 1; }), 1000); } return () => clearInterval(ref.current); }, [running, timeLeft]);
+  const check = () => { const q = qs[idx % qs.length]; const ok = q.accept.some(a => input.trim().toLowerCase().includes(a.toLowerCase())); if (ok) setScore(s => s + 1); setTotal(t => t + 1); setFeedback(ok ? "\u2713" : "Answer: " + q.a); setTimeout(() => { setFeedback(null); setInput(""); setIdx(i => i + 1); iref.current?.focus(); }, ok ? 400 : 1200); };
+  if (done) return <div style={{ textAlign: "center", padding: "2rem", fontFamily: F }}><div style={{ fontSize: 48 }}>{score}</div><div style={{ fontSize: 14, color: "var(--color-text-secondary)", fontStyle: "italic" }}>of {total} in 60s</div><button onClick={() => { setIdx(0); setScore(0); setTotal(0); setTimeLeft(60); setDone(false); setFeedback(null); setInput(""); }} style={{ ...pillBtn(true, W), marginTop: 16 }}>Again</button></div>;
+  if (!running) return <div style={{ textAlign: "center", padding: "2rem", fontFamily: F }}><div style={{ fontSize: 20, marginBottom: 8 }}>\u26a1 Number Blitz</div><div style={{ fontSize: 13, color: "var(--color-text-secondary)", fontStyle: "italic", marginBottom: 16 }}>60 seconds. Key stats. Go!</div><button onClick={() => setRunning(true)} style={pillBtn(true, W)}>Start \u2192</button></div>;
+  const q = qs[idx % qs.length];
+  return (
+    <div style={{ fontFamily: F }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--color-text-secondary)", fontStyle: "italic", marginBottom: 12 }}><span>{score}/{total}</span><span style={{ color: timeLeft < 10 ? C : "var(--color-text-secondary)", fontWeight: timeLeft < 10 ? 700 : 400 }}>{timeLeft}s</span></div>
+      <div style={{ height: 3, background: "#e8e8e0", borderRadius: 2, marginBottom: 16 }}><div style={{ height: 3, borderRadius: 2, width: (timeLeft / 60 * 100) + "%", background: W, transition: "width 1s linear" }} /></div>
+      <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, lineHeight: 1.5 }}>{q.q}</div>
+      <div style={{ display: "flex", gap: 8 }}><input ref={iref} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && check()} placeholder="Type answer..." autoFocus style={{ flex: 1, padding: "8px 12px", fontSize: 14, fontFamily: F, borderRadius: 10, border: "1.5px solid var(--color-border-tertiary)", outline: "none" }} /><button onClick={check} style={pillBtn(true, W)}>Go</button></div>
+      {feedback && <div style={{ marginTop: 10, fontSize: 14, fontWeight: 700, color: feedback === "\u2713" ? G : C, fontFamily: F }}>{feedback}</div>}
+    </div>
+  );
+}
+
+function ConnectionChallenge() {
+  const [pairs] = useState(() => shuffle(CONNECTION_PAIRS));
+  const [idx, setIdx] = useState(0); const [showH, setShowH] = useState(false); const [timeLeft, setTimeLeft] = useState(90); const [running, setRunning] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => { if (running && timeLeft > 0) { ref.current = setInterval(() => setTimeLeft(t => { if (t <= 1) { clearInterval(ref.current); setRunning(false); return 0; } return t - 1; }), 1000); } return () => clearInterval(ref.current); }, [running, timeLeft]);
+  const p = pairs[idx % pairs.length];
+  const next = () => { setIdx(i => i + 1); setShowH(false); setTimeLeft(90); setRunning(true); };
+  if (!running && timeLeft === 90) return <div style={{ textAlign: "center", padding: "2rem", fontFamily: F }}><div style={{ fontSize: 20, marginBottom: 8 }}>\uD83D\uDD17 Connection Challenge</div><div style={{ fontSize: 13, color: "var(--color-text-secondary)", fontStyle: "italic", marginBottom: 16 }}>Two papers. How do they relate? 90s per pair.</div><button onClick={() => setRunning(true)} style={pillBtn(true, A)}>Start \u2192</button></div>;
+  return (
+    <div style={{ fontFamily: F }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--color-text-secondary)", fontStyle: "italic", marginBottom: 14 }}><span>Pair {idx % pairs.length + 1}/{pairs.length}</span><span style={{ color: timeLeft < 15 ? C : "var(--color-text-secondary)" }}>{timeLeft}s</span></div>
+      <div style={{ padding: "14px 16px", borderRadius: 10, background: AL, border: "1.5px solid " + A, marginBottom: 10 }}><div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 2, color: A, marginBottom: 6 }}>Paper A</div><div style={{ fontSize: 14, fontWeight: 700 }}>{p.paper1}</div></div>
+      <div style={{ textAlign: "center", fontSize: 18, color: "var(--color-text-secondary)", margin: "4px 0" }}>\u00d7</div>
+      <div style={{ padding: "14px 16px", borderRadius: 10, background: WL, border: "1.5px solid " + W, marginBottom: 16 }}><div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 2, color: W, marginBottom: 6 }}>Paper B</div><div style={{ fontSize: 14, fontWeight: 700 }}>{p.paper2}</div></div>
+      {!showH ? <div style={{ textAlign: "center" }}><button onClick={() => setShowH(true)} style={pillBtn(true, G)}>Reveal connection</button></div>
+      : <div><div style={{ padding: "14px 16px", borderRadius: 10, background: GL, border: "1.5px solid " + G, fontSize: 13, lineHeight: 1.7, marginBottom: 14 }}>{p.hint}</div><div style={{ textAlign: "center" }}><button onClick={next} style={pillBtn(true, A)}>Next pair \u2192</button></div></div>}
+    </div>
+  );
+}
+
+function TFUShowdown() {
+  const [stmts] = useState(() => shuffle(TFU_STATEMENTS));
+  const [idx, setIdx] = useState(0); const [choice, setChoice] = useState(null); const [showA, setShowA] = useState(false); const [score, setScore] = useState(0); const [total, setTotal] = useState(0);
+  const s = stmts[idx % stmts.length];
+  const chk = (v) => { setChoice(v); setShowA(true); setTotal(t => t + 1); if (v === s.verdict) setScore(c => c + 1); };
+  const next = () => { setIdx(i => i + 1); setChoice(null); setShowA(false); };
+  return (
+    <div style={{ fontFamily: F }}>
+      <div style={{ fontSize: 12, color: "var(--color-text-secondary)", fontStyle: "italic", marginBottom: 14 }}>#{idx % stmts.length + 1}/{stmts.length} \u00b7 Score: {score}/{total}</div>
+      <div style={{ padding: "16px 18px", borderRadius: 12, background: WL, border: "1.5px solid " + W, fontSize: 15, lineHeight: 1.7, fontWeight: 700, marginBottom: 16 }}>\u201c{s.statement}\u201d</div>
+      {!showA ? <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>{["True", "False", "Uncertain"].map(v => <button key={v} onClick={() => chk(v)} style={{ ...pillBtn(false, A), fontSize: 13 }}>{v}</button>)}</div>
+      : <div>
+          <div style={{ marginBottom: 10, fontSize: 14, fontWeight: 700, color: choice === s.verdict ? G : C }}>You: {choice} {choice === s.verdict ? "\u2713" : "\u2717"} \u00b7 Answer: {s.verdict}</div>
+          <div style={{ padding: "12px 16px", borderRadius: 10, background: GL, border: "1.5px solid " + G, fontSize: 13, lineHeight: 1.7, marginBottom: 14 }}><span style={{ fontWeight: 700 }}>Explanation: </span>{s.explanation}</div>
+          <div style={{ textAlign: "center" }}><button onClick={next} style={pillBtn(true, A)}>Next \u2192</button></div>
+        </div>}
+    </div>
+  );
+}
+
+function App() {
+  const [mode, setMode] = useState("learn");
+  const [theme, setTheme] = useState("all");
+  const filteredCards = theme === "all" ? FLASHCARDS : FLASHCARDS.filter(c => c.theme === theme);
+  const filteredQuiz = theme === "all" ? QUIZ_QUESTIONS : QUIZ_QUESTIONS.filter(q => q.theme === theme);
+  const modes = [
+    { id: "learn", label: "Learn", e: "\uD83D\uDCD6" },
+    { id: "flashcards", label: "Flashcards", e: "\uD83C\uDFB4" },
+    { id: "quiz", label: "Quiz", e: "\uD83C\uDFAF" },
+    { id: "matchup", label: "Matchup", e: "\uD83E\uDDE9" },
+    { id: "blitz", label: "# Blitz", e: "\u26A1" },
+    { id: "connection", label: "Connect", e: "\uD83D\uDD17" },
+    { id: "tfu", label: "T/F/U", e: "\u2696\uFE0F" },
+    { id: "timer", label: "Pomodoro", e: "\u23F1\uFE0F" },
+  ];
+  const needsFilter = ["learn", "flashcards", "quiz"].includes(mode);
+  return (
+    <div style={{ fontFamily: F, maxWidth: 660, margin: "0 auto", padding: "0 4px" }}>
+      <div style={{ textAlign: "center", padding: "1.5rem 0 .75rem" }}>
+        <div style={{ fontSize: 13, textTransform: "uppercase", letterSpacing: 3, color: A, marginBottom: 4 }}>\u2727 UCSB Winter 2026 \u2727</div>
+        <div style={{ fontSize: 28, fontWeight: 700, letterSpacing: -0.5 }}>ECON 151 Study Tool</div>
+        <div style={{ fontSize: 13, color: "var(--color-text-secondary)", fontStyle: "italic", marginTop: 4 }}>{FLASHCARDS.length} flashcards \u00b7 {QUIZ_QUESTIONS.length} quiz Qs \u00b7 4 games \u00b7 all 10 weeks</div>
+      </div>
+      <div style={{ display: "flex", gap: 4, justifyContent: "center", padding: "8px 0", flexWrap: "wrap" }}>
+        {modes.map(m => <button key={m.id} onClick={() => setMode(m.id)} style={pillBtn(mode === m.id, A)}>{m.e} {m.label}</button>)}
+      </div>
+      {needsFilter && <div style={{ display: "flex", gap: 4, padding: "4px 0 14px", flexWrap: "wrap", justifyContent: "center" }}>
+        {THEMES.map(t => <button key={t.id} onClick={() => setTheme(t.id)} style={{ padding: "3px 10px", fontSize: 11, fontFamily: F, borderRadius: 12, background: theme === t.id ? W : "transparent", color: theme === t.id ? "#fff" : "var(--color-text-secondary)", border: theme === t.id ? "1px solid " + W : "1px solid var(--color-border-tertiary)", cursor: "pointer", transition: "all .2s", whiteSpace: "nowrap" }}>{t.label}</button>)}
+      </div>}
+      <div style={{ border: "1px solid var(--color-border-tertiary)", borderRadius: 14, padding: "1.25rem", background: "var(--color-background-primary)" }}>
+        {mode === "learn" && <Learn theme={theme} />}
+        {mode === "flashcards" && <Flashcards cards={filteredCards} />}
+        {mode === "quiz" && <Quiz questions={filteredQuiz} />}
+        {mode === "matchup" && <Matchup />}
+        {mode === "blitz" && <NumberBlitz />}
+        {mode === "connection" && <ConnectionChallenge />}
+        {mode === "tfu" && <TFUShowdown />}
+        {mode === "timer" && <Pomodoro />}
+      </div>
+      <div style={{ textAlign: "center", padding: "14px 0", fontSize: 12, color: "var(--color-text-tertiary)", fontFamily: F, fontStyle: "italic" }}>Final Exam: Wed Mar 18, 7:30 PM \u00b7 You\u2019ve got this \u2727</div>
+    </div>
+  );
+}
+
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+</script>
+</body>
+</html>
