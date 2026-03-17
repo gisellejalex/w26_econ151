@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECON 151 Study Tool</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --tp:#1a1a1a;--ts2:#555;--tt:#888;
+  --bg:#fff;--bg2:#f8f8f6;--bg3:#f0efe8;
+  --bd:rgba(0,0,0,0.12);
+  --accent:#6b4c8a;--accentL:#f3eef8;
+  --green:#3d7a5f;--greenL:#eaf5f0;
+  --coral:#c25d4e;--coralL:#fdf0ee;
+  --gold:#b8860b;--goldL:#fdf8ec;
+  --blue:#2e5090;--blueL:#e8f0fa;
+}
+@media(prefers-color-scheme:dark){:root{
+  --tp:#e8e8e0;--ts2:#9a9a8e;--tt:#6b6b60;
+  --bg:#1a1a18;--bg2:#242422;--bg3:#2c2c28;
+  --bd:rgba(255,255,255,0.12);
+  --accentL:#2a2040;--greenL:#1a2e24;--coralL:#2e1c1a;--goldL:#2e2810;--blueL:#1a2040;
+}}
+body{font-family:'Times New Roman',Georgia,serif;background:var(--bg2);color:var(--tp);min-height:100vh;padding:12px}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input{font-family:inherit;background:var(--bg);color:var(--tp)}
+.pill{padding:5px 14px;font-size:12px;border-radius:20px;border:1px solid var(--bd);transition:all .2s;white-space:nowrap}
+.pill.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.pill:hover{opacity:0.85}
+.thpill{padding:3px 10px;font-size:11px;border-radius:12px;border:1px solid var(--bd);transition:all .2s;white-space:nowrap}
+.thpill.on{background:var(--gold);color:#fff;border-color:var(--gold)}
+.card{border:1px solid var(--bd);border-radius:14px;padding:1.25rem;background:var(--bg);min-height:200px}
+.progress-bar{height:4px;background:var(--bg3);border-radius:2px;margin:8px 0;overflow:hidden}
+.progress-fill{height:100%;border-radius:2px;transition:width 0.5s ease}
+textarea{font-family:inherit;background:var(--bg);color:var(--tp);border:1px solid var(--bd);border-radius:10px;padding:10px;width:100%;resize:vertical;font-size:13px;min-height:80px}
+.learn-section{border:1px solid var(--bd);border-radius:10px;margin-bottom:10px;overflow:hidden;transition:all .2s}
+.learn-header{padding:12px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.learn-header:hover{background:var(--bg3)}
+.learn-body{padding:0 16px 14px;border-top:1px solid var(--bd)}
+.learn-point{font-size:13px;line-height:1.7;padding:6px 0 6px 14px;border-left:2px solid var(--accent)}
+.learn-heading{font-size:13px;font-weight:700;color:var(--accent);margin:12px 0 6px}
+.exam-q{padding:14px 16px;border-radius:10px;background:var(--blueL);border:1px solid var(--blue);margin-bottom:12px}
+.exam-a{padding:14px 16px;border-radius:10px;background:var(--greenL);border:1px solid var(--green);margin-bottom:12px;display:none}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js"></script>
+<script type="text/babel">
+const {useState,useEffect,useCallback,useRef} = React;
+
+const THEMES=[
+  {id:"all",label:"All"},{id:"roles",label:"Changing Roles"},{id:"education",label:"Education"},
+  {id:"family",label:"Family"},{id:"violence",label:"Violence"},{id:"wagegap",label:"Wage Gap"},
+  {id:"penalty",label:"Motherhood"},{id:"development",label:"Norms & Dev"},{id:"sogie",label:"SOGIE"},
+];
+
+const LEARN_CONTENT=[
+  {theme:"roles",title:"The Changing Economic Roles of Men and Women",week:"Week 1",content:[
+    {heading:"Goldin (2006) — The Quiet Revolution",points:[
+      "Phase I (1800s–1920s): Young unmarried women in manufacturing. Strong negative income effect from husband’s earnings. Marriage meant exit from the labor force.",
+      "Phase II (1930s–1950): Clerical/office jobs expanded. High school education spread. Household appliances reduced domestic burden. Marriage bars declined. Married women began entering.",
+      "Phase III (1950s–1970s): Rapid growth in married women’s LFP, but women remained ‘secondary workers’ — they accommodated husbands’ careers, underestimated their own future work, and chose low-advancement occupations.",
+      "Phase IV (late 1970s–present): THE REVOLUTION. Women revised expectations about lifelong work, leading to more education, better-paying majors, professional training, and delayed marriage. Work became central to identity, not just supplementary income.",
+      "Key mechanism: younger women observed older cohorts’ unexpected long-term labor force attachment and upgraded their investments. The birth control pill enabled delayed marriage. Both income and substitution elasticities declined as work became identity rather than a response to wages.",
+      "Identification: historical/descriptive. Census data, NLS longitudinal surveys, historical employment records. Strength: comprehensive narrative across a century. Limitation: cannot isolate any single causal variable."
+    ]},
+    {heading:"Coile & Duggan (2019) — When Labor’s Lost",points:[
+      "Documents the mirror image of Goldin: while women’s roles expanded, low-skilled men experienced broad deterioration — rising mortality from overdoses and suicides (2000–2016), increasing disability and obesity, declining marriage rates, and mass incarceration.",
+      "Median earnings for all men flat since the early 1970s. Less-educated men experienced substantial real wage decreases.",
+      "Education is the key protective factor. Declining military service reduced a source of training, structure, and benefits for non-college men.",
+      "Connects to the course theme: gender convergence in employment came partly from men falling, not just women rising."
+    ]}
+  ]},
+  {theme:"education",title:"Educational Gender Gaps",week:"Week 2",content:[
+    {heading:"Goldin, Katz & Kuziemko (2006) — College Gender Gap Reversal",points:[
+      "Data: U.S. high school classes of 1957, 1972, and 1992. Compares grades, test scores, courses taken, and college completion.",
+      "About 40% of the female college advantage in 1992 is explained by superior high school preparation (mainly grades). The remaining 60% reflects deeper behavioral and aspirational gaps.",
+      "Structural change: in 1957, families with fewer resources favored sons for college. By 1992, women were ahead at ALL SES levels, with the female advantage largest at the bottom — a complete reversal.",
+      "Interpretation: falling barriers for women exposed boys’ pre-existing school problems. The authors emphasize ‘non-cognitive skills’ (discipline, effort, compliance)."
+    ]},
+    {heading:"The Boys’ Underperformance Debate",points:[
+      "Reeves (2022): differential brain development means boys mature later. Recommends ‘redshirting’ (starting school a year later). Biological framing.",
+      "DiPrete & Buchmann (2006): masculine identity formation involves ‘oppositional culture’ — rejection of school values, reinforced by peers, especially for boys with absent or low-education fathers. Social/norms framing.",
+      "Lundberg (2020): Using Add Health data (U.S. longitudinal, birth cohorts 1976–84), the gender gap in educational aspirations CANNOT be explained by skills, behavior, family background, or school performance. ‘Kitchen sink’ regressions explain only 25–30%. Gender itself is the predictor.",
+      "Course position: the tendency to frame boys’ problems as innate is ‘probably a mistake’ and ‘may be misleading for those designing interventions.’"
+    ]},
+    {heading:"Brenøe & Zölitz (2020) — Female Peers Widen the STEM Gap",points:[
+      "Data: Danish administrative records, 182,000 students across 127 schools, cohorts 1980–1994, with 20-year follow-up through population registers.",
+      "Identification: random variation in gender composition across cohorts within the same school. School fixed effects, cohort fixed effects, school-specific time trends, and cohort-by-school fixed effects (most restrictive possible). Balancing tests confirm randomness.",
+      "A 10-percentage-point increase in female high school peers REDUCES women’s STEM enrollment by 6.4% and INCREASES men’s by 2.4%, widening the gender gap by 17%.",
+      "Long-run: reduces women’s STEM employment by 4%, increases the gender wage gap by 5%, and increases women’s fertility by age 36.",
+      "SURPRISING: more gender-balanced environments do NOT reduce gender gaps. Peer conformity pressure reinforces traditional norms.",
+      "KEY MODERATOR: effect vanishes entirely for women whose mothers have STEM degrees. A salient individual role model overrides anonymous peer pressure.",
+      "Contradicts Beaman et al. (2012), who found female village leaders in India RAISED girls’ aspirations. Resolution: anonymous peers (conformity) are not visible leaders (aspiration). Context matters: Denmark is already egalitarian; India has restrictive norms where any female leader is new information."
+    ]}
+  ]},
+  {theme:"family",title:"Family Economics, Bargaining, and Divorce",week:"Weeks 3–5",content:[
+    {heading:"The Gains to Marriage and Becker’s Framework",points:[
+      "Five economic benefits: (1) economies of scale, (2) gains to specialization and exchange, (3) household public goods (housing, children), (4) risk-pooling, (5) consumption externalities (altruism, shared leisure).",
+      "Becker (1981): women’s ‘heavy biological commitment to children’ gives comparative advantage in domestic work. Reinforced by sector-specific skill investments. Gender specialization is efficient.",
+      "This framework dominated family economics for decades. The course systematically dismantles it using evidence from adoptive parents, same-sex couples, and cross-cultural variation."
+    ]},
+    {heading:"The Unitary Model and Its Replacement by Bargaining",points:[
+      "Unitary model: family maximizes a single utility function subject to a pooled budget constraint. Income pooling: only total household income matters, not who receives it.",
+      "Advantages: preserves standard demand theory. Disadvantages: pooling rejected empirically; cannot address household formation/dissolution; ignores intrahousehold distribution.",
+      "Divorce-threat bargaining (McElroy & Horney, 1981): Nash bargaining where the threat point is utility if divorced. Outcomes depend on ‘extramarital environmental parameters’: remarriage prospects, welfare, labor market conditions.",
+      "Separate spheres (Lundberg & Pollak, 1993): threat point is noncooperative equilibrium WITHIN marriage. Depends on individual income control and tolerance of conflict. Innovation: you don’t need to threaten divorce to have bargaining power.",
+      "Central prediction: anything that improves your threat point shifts the allocation in your favor."
+    ]},
+    {heading:"Empirical Tests: Pooling Rejected",points:[
+      "Lundberg, Pollak & Wales (1997): UK replaced Child Tax Allowance (reduced husband’s tax) with Child Benefit (cash payment to mothers), 1977–79. Amount roughly constant (£400/yr for 2 children). Result: significant shift toward women’s and children’s clothing. Rejects pooling. Method: quasi-natural experiment, UK Family Expenditure Survey.",
+      "Duflo (2000): South African old-age pension expanded dramatically 1990–1993. Pensions received by grandmothers improved grandchildren’s height-for-age, especially for girls. Grandfather pensions had NO effect. Girls bridged approximately half the gap with American girls. Method: compare eligible vs. non-eligible households before/after expansion.",
+      "Thomas (1990): In Brazil, mother’s income effect on child survival is approximately 20 times larger than father’s.",
+      "Together: the unitary model is dead empirically. Who receives income determines how it’s spent."
+    ]},
+    {heading:"Divorce and Its Legal Framework",points:[
+      "Stevenson & Wolfers (2007): U.S. divorce spiked 1960–1980, then declined steadily. The spike coincided with the shift from fault-based to no-fault (unilateral) divorce, starting with California in 1969.",
+      "Economists expected no effect based on Coase theorem logic: if marital surplus is positive, couples should negotiate to stay. But unilateral divorce was massively cheaper and easier, triggering dissolution of the stock of unhappy marriages.",
+      "Long-term effects: easier exit made marriage less useful as a commitment device, reducing specialization, marriage-specific investments, and overall marriage rates.",
+      "Gruber (2004): children exposed to unilateral divorce regimes had lower incomes and education in adulthood.",
+      "Halla (2013): joint custody laws increased marriage rates, fertility, and men’s wellbeing.",
+      "Wong (2014, 2016): homemaker’s provision (recognizing homemaker contributions at divorce) increased women’s home specialization and marriage rates."
+    ]},
+    {heading:"Fertility as a Bargaining Problem",points:[
+      "Doepke & Kindermann (2019): Using GGP data from 19 European countries, many couples DISAGREE about having children. Each partner has veto power — births unlikely unless both agree.",
+      "Women are more likely to disagree in countries where men do less childcare and where mothers are less likely to be employed.",
+      "Policy implication: childcare subsidies (reducing mothers’ specific costs) are more effective than cash bonuses for increasing fertility."
+    ]}
+  ]},
+  {theme:"violence",title:"Intimate Partner Violence",week:"Week 5",content:[
+    {heading:"Two Models of Violence",points:[
+      "Expressive: loss of control under strong emotions, often combined with alcohol. Violence is impulsive.",
+      "Instrumental: violence or threat of violence intended to control partner’s behavior. Violence is strategic.",
+      "In practice these overlap. The same perpetrator can both lose control (expressive) and systematically sabotage a partner’s employment (instrumental)."
+    ]},
+    {heading:"Card & Dahl (2011) — Football and Violence",points:[
+      "Data: NIBRS police reports of intimate partner violence on NFL Sundays. NFL betting market point spreads define ‘expected’ outcomes. Geographic identification of fan populations.",
+      "An upset loss by the home team causes approximately a 10% increase in male-on-female at-home IPV.",
+      "Other IPV spikes: Christmas +18%, Thanksgiving +20%, Memorial Day +30%, temperatures above 80°F +8%.",
+      "Identification strength: the game outcome is exogenous to relationship dynamics. The betting spread isolates the ‘surprise’ component. Supports the expressive/loss-of-control model."
+    ]},
+    {heading:"Aizer (2010) — Relative Wages and IPV",points:[
+      "Data: California female hospitalizations for assault (proxy for severe IPV), 1990–2003. Local wage growth in gender-segregated industries.",
+      "Method: uses PREDICTED relative wages constructed from industry-level wage changes (not individual wages, which are endogenous to abuse). The gender segregation of industries provides the identifying variation.",
+      "Narrowing of the gender wage gap explains approximately 9% of the decline in female assault hospitalizations. Effect concentrated on weekends (not just reduced exposure).",
+      "Supports the bargaining/exit model: when women’s outside options improve, they can more credibly threaten to leave."
+    ]},
+    {heading:"Adams et al. (2024) — Dynamics of Abusive Relationships",points:[
+      "Data: Finnish police reports linked to employer-employee data (FLEED) via unique national identifiers. Can track the SAME abuser across successive partners.",
+      "Women’s earnings and employment fall IMMEDIATELY upon cohabiting with an eventually-abusive man — before any violence is reported to police.",
+      "Men who are violent against anyone impose economic costs on ALL their female partners, even those who never file a report.",
+      "Bridges both models: violent men both lose control AND strategically sabotage partners’ economic independence across successive relationships."
+    ]},
+    {heading:"The Empowerment Paradox (Unresolved)",points:[
+      "High-income countries (Aizer 2010, Anderberg et al. 2016): improving women’s economic position REDUCES violence. Exit threat works.",
+      "Patriarchal developing countries (Jayachandran 2021 cites multiple studies): women’s empowerment programs can INCREASE violence via male backlash.",
+      "Key moderator: credible EXIT options. Where divorce is accessible, empowerment enables leaving. Where it isn’t, income without escape is provocation without an escape route.",
+      "Field et al. (2021) designed their Indian bank account intervention to make women’s earnings LESS VISIBLE to husbands specifically to avoid triggering backlash.",
+      "No unified theoretical model reconciles both directions. This is the sharpest unresolved contradiction in the course."
+    ]}
+  ]},
+  {theme:"wagegap",title:"The Gender Wage Gap",week:"Weeks 6–7",content:[
+    {heading:"Blau & Kahn (2000) — The Baseline Decomposition",points:[
+      "Data: CPS/ACS, large representative U.S. samples. Method: Oaxaca-Blinder wage decomposition.",
+      "Female/male earnings ratio: approximately 60% through 1980, rising to approximately 80% by the late 1990s.",
+      "Controlling for human capital (education, experience): approximately 85% of the gap remains unexplained.",
+      "Adding occupation and industry controls: approximately 40% remains unexplained.",
+      "The interpretation problem: is occupation a CONTROL (women freely choose lower-paid jobs) or a MECHANISM (women are steered/excluded)? Adding it changes what ‘unexplained’ means. This tension organizes the entire wage gap literature."
+    ]},
+    {heading:"Niederle & Vesterlund (2011) — Gender and Competition",points:[
+      "Lab experiment: 40 men and 40 women perform an addition task. Equal performance under both piece-rate and tournament compensation.",
+      "73% of men versus 35% of women chose the tournament. Massive gap despite equal ability.",
+      "Decomposition: approximately 1/3 of the gap is explained by overconfidence (75% of men vs. 43% of women believe they are the best in their group). The remaining 2/3 reflects aversion to competition itself, particularly in mixed-sex environments.",
+      "Cross-cultural evidence: the gender gap in tournament entry is REVERSED in the matrilineal Khasi society (vs. patrilineal Maasai). Gaps do not appear until adolescence. No gap in Swedish children age 7–10.",
+      "These patterns strongly suggest competition aversion is socially constructed, not biologically innate."
+    ]},
+    {heading:"Nelson’s Critique of Risk Aversion Literature",points:[
+      "The broader literature finding women more ‘risk averse’ suffers from three systematic problems:",
+      "1. Incorrect citation of prior results (studies cited as finding gender differences that actually found null effects).",
+      "2. Selective emphasis on confirming results within studies that produced mixed findings.",
+      "3. Statistical evidence of publication bias (the distribution of published standard errors is inconsistent with no true difference).",
+      "The course assessment: the risk aversion literature is ‘now ambiguous.’ Results are context-dependent, domain-dependent, and disappear when controlling for income and family size."
+    ]},
+    {heading:"Goldin (2014) — Greedy Jobs and the Last Chapter",points:[
+      "In some occupations, working 70 hours earns far more than twice what 35 hours earns. This nonlinearity exists because workers are imperfect substitutes — client-specific knowledge makes individual availability valuable.",
+      "These ‘greedy jobs’ (law, finance, consulting) disproportionately penalize anyone who needs temporal flexibility — primarily mothers.",
+      "Cross-occupational variation in the gender wage gap maps closely onto hours-nonlinearity: gap is largest in business and law, smallest in science, tech, and pharmacy.",
+      "Implication: the ‘last chapter’ of convergence requires making workers more substitutable, not just reducing discrimination."
+    ]},
+    {heading:"Goldin & Katz (2016) — Pharmacy as Proof",points:[
+      "Pharmacy underwent three transformations: corporate consolidation (CVS, Walgreens replaced independents), IT standardization (electronic prescription records via PBMs), and product standardization (manufactured vs. compounded drugs).",
+      "Result: pharmacists became highly substitutable. Any qualified pharmacist can fill your prescription.",
+      "Ownership premium: 16% in 1970, zero today. Part-time hourly penalty: nearly zero. Female share: under 5% (1960s) to over 60% (2000s).",
+      "Gender earnings gap became the smallest of any high-paid profession. Once hours are controlled, the residual gap is nearly zero.",
+      "This was market-driven, not policy-driven — distinguishing Goldin’s structural argument from the policy interventions tested by Kleven in Austria."
+    ]},
+    {heading:"Workplace Discrimination: New Generation of Studies",points:[
+      "Sarsons (2019): referrals to female surgeons drop more sharply after a patient death and rise less after a good outcome, compared to identical events for male surgeons. Asymmetric updating of beliefs.",
+      "Egan et al. (2022): female financial advisers are 20% more likely to lose their jobs and 30% less likely to find new ones after identical misconduct incidents. Gap smaller at firms with more female managers.",
+      "Babcock et al. (2017): women volunteer more for, and are more often asked to perform, tasks that do not contribute to promotion (‘non-promotable work’). Driven by beliefs that women will say yes.",
+      "Cullen & Perez-Truglia (2023): socializing with male managers during smoking breaks leads to higher promotion rates for male employees. Uses quasi-random manager rotations in a large bank.",
+      "Folke & Rickne (2022): harassment deters minority-gender workers from applying to and staying in jobs, reinforcing occupational segregation and increasing the wage gap."
+    ]}
+  ]},
+  {theme:"penalty",title:"The Motherhood Wage Penalty",week:"Week 7",content:[
+    {heading:"Kleven, Landais & Søgaard (2019) — The Event Study",points:[
+      "Data: Danish administrative records, 470,000 first births between 1985–2003, 15 million person-year observations.",
+      "Method: event study tracking earnings from 5 years before to 20 years after first child. Year dummies control for labor market conditions; age dummies control for life-cycle effects.",
+      "Women experience an immediate drop of approximately 30% in gross earnings. The penalty stabilizes at approximately 20% after 10 years — unchanged at 20 years. Men: essentially zero change.",
+      "Mechanisms: employment exit, reduced hours, wage rate cuts, switching to public sector/family-friendly jobs, slower promotion (‘mommy-tracking’).",
+      "Cross-country variation correlates with gender role ATTITUDES, not policy generosity. Intergenerational: grandmother’s work patterns predict daughter’s child penalty.",
+      "In Denmark, non-child sources of gender inequality fell steadily 1980–2013 until child-related sources accounted for essentially ALL of the remaining gap."
+    ]},
+    {heading:"Kleven, Landais & Søgaard (2021) — Biology Ruled Out",points:[
+      "Compared biological parents with adoptive parents in Danish admin data. Reweighted to match on year, number of children, mother’s age, education, and pre-child earnings.",
+      "Result: NO long-run difference in child penalties. Slightly larger short-run drop for biological mothers (maternity leave/recovery), but vanishes within approximately 2 years.",
+      "Authors’ conclusion: child-related gender inequality ‘cannot be understood through the lens of biology and incentive-based specialization, pushing toward a greater focus on preference formation, social norms, and culture.’",
+      "This directly refutes Becker’s biological comparative advantage framework."
+    ]},
+    {heading:"Andresen & Nix (2022) — Same-Sex Couples Confirm Norms",points:[
+      "Norwegian admin data on same-sex female couples.",
+      "SMALLER child penalties than heterosexual mothers, and BOTH mothers reduce earnings (not just one).",
+      "If biology drove the penalty, the birth mother should bear a disproportionate cost. She does not in the long run.",
+      "Confirms that gender norms and discrimination, not biology, are the primary drivers."
+    ]},
+    {heading:"Kleven et al. (Austria, 2024) — Policy Fails",points:[
+      "Three Austrian reforms (1990, 1996, 2000) changed parental leave duration (up to 30 months) and expanded public childcare.",
+      "Effect on motherhood penalty: ZERO. Effect on fertility: ZERO.",
+      "Why: (1) leave that long is a career interruption, not career support; (2) childcare expansion crowded out informal care from relatives; (3) ‘very strong maternal care norms’ meant mothers used the leave without changing career trajectories.",
+      "Norway childcare subsidies: also zero employment effect (crowded out grandparent care). Quebec universal childcare: DID increase employment (universal, cheap, less informal care to displace)."
+    ]},
+    {heading:"Cross-Paper Synthesis: Goldin vs. Kleven",points:[
+      "Goldin (2014, 2016): market restructuring (making workers substitutable) CAN close the gap. Pharmacy proves it. Demand-side mechanism.",
+      "Kleven (Austria, 2024): government policy (leave, childcare subsidies) CANNOT close the gap. Supply-side mechanism.",
+      "These are COMPLEMENTARY, not contradictory. They test different levers. Policy treats symptoms; restructuring treats the cause (worker non-substitutability). Both agree norms are the binding constraint underneath.",
+      "The conversation the course wants you to have: neither lever alone is sufficient. Norms must change — but norms CAN change (Kleven 2019 shows intergenerational transmission, meaning each generation’s norms partly reflect the previous generation’s behavior)."
+    ]}
+  ]},
+  {theme:"development",title:"Gender, Norms, and Economic Development",week:"Weeks 8–9",content:[
+    {heading:"Jayachandran (2021) — Five Norm Barriers",points:[
+      "Even controlling for economic development, enormous variation in women’s employment. Social norms explain the residual, operating through five channels:",
+      "1. Safety: harassment and violence in public spaces and workplaces. In New Delhi, 95% of women aged 16–49 felt unsafe in public.",
+      "2. Restricted mobility and social interaction: affects acceptable job sites and business networks.",
+      "3. Control over household money: cash grants to female microentrepreneurs were ‘captured’ by household members. Mobile money and direct deposit are less visible alternatives.",
+      "4. Male backlash: women’s empowerment programs can increase IPV in patriarchal settings.",
+      "5. Unequal domestic burden: women have fewer hours, need more flexibility, and cannot travel for work.",
+      "Religion matters: Hindu caste system (men outside family = ‘pollution’ for women), Muslim purdah (female seclusion). Explains South Asia and Middle East.",
+      "Key insight: paid employment confers autonomy and power; unpaid home work does not. Consistent with bargaining models."
+    ]},
+    {heading:"Bursztyn, González & Yanagizawa-Drott (2020) — Saudi Pluralistic Ignorance",points:[
+      "Data: 500 young married Saudi men (18–35) in Riyadh, plus 1,500-man national survey and 703-man online survey.",
+      "Method: lab-in-field experiment. Anonymous responses. Incentivized belief elicitation (closest guess wins $20 gift card). Random assignment to information treatment. Follow-up at 3–5 months.",
+      "87% of men privately support women working outside the home. But the average guess is that only 63% do. 72% of participants strictly underestimate peer support by an average of 24 percentage points.",
+      "Treatment effect: telling men the true level of support increased wife job-service signup from 23.5% to 32% (+36%). At 3–5 months: wife job applications rose from 5.8% to 16.2% (+180%).",
+      "Why misperceptions persist: men rarely discuss the topic with friends and relatives. Misperceptions are inversely correlated with frequency of discussion.",
+      "National survey confirms: 82% of 1,500 men agree; 92% underestimate true support.",
+      "Policy implication: ‘active information provision might be particularly important in less democratic societies, where natural information aggregators (elections, polls) are limited.’"
+    ]},
+    {heading:"Field, Jayachandran, Pande & Rigol (2021) — India Bank Accounts",points:[
+      "Data: RCT in 197 village clusters in Madhya Pradesh (one of India’s most restrictive states for gender norms).",
+      "Background: only 28% of women report having a say in whether they work. 74% of women agree women can work, but only 66% of husbands agree.",
+      "Intervention: bank accounts + direct deposit of government workfare (MGNREGS) earnings into women’s personal accounts.",
+      "Results: significant increase in women’s work, especially for previously non-working (‘constrained’) women. Effect persisted into long run (3 years) for constrained women.",
+      "Norm effects: women’s own attitudes shifted positive. Men’s OWN attitudes did not change — but their PERCEPTION of community norms shifted. They realized others were more supportive than they had thought.",
+      "The intervention was designed to make women’s earnings less visible to husbands — specifically to avoid triggering backlash.",
+      "Connects to Bursztyn: both find that men’s PERCEPTION of community norms is the key lever."
+    ]},
+    {heading:"Deep Roots and Cautions",points:[
+      "Alesina, Giuliano & Nunn (2013): regions with soil and terrain historically suitable for plough agriculture have lower female employment and more traditional gender attitudes TODAY. Culture created by agricultural technology persists centuries beyond the conditions that produced it.",
+      "Boserup (1970): hypothesized that plough vs. hoe agriculture created lasting gender norms. Men’s comparative advantage in plough use (upper-body strength) excluded women from farming in plough societies.",
+      "Duflo (2012): the empirical link from women’s empowerment to economic growth is ‘not transformational.’ Effects are positive but modest. Gender equality should be pursued as a fundamental objective, not merely as a means to growth. Challenges World Bank (2001) orthodoxy."
+    ]}
+  ]},
+  {theme:"sogie",title:"Sexual Orientation and Gender Identity",week:"Week 10",content:[
+    {heading:"Badgett, Carpenter, Lee & Sansone (2024) — Four Stylized Facts",points:[
+      "1. Gay men earn LESS than heterosexual men (gay penalty, typically 5–15%).",
+      "2. Lesbian women earn MORE than heterosexual women (lesbian premium, typically 5–10%).",
+      "3. Transgender individuals earn LESS than cisgender individuals.",
+      "4. Bisexual individuals often have the worst labor market outcomes.",
+      "Data challenges: disclosure bias (less-educated LGBTQ+ less likely to disclose), small samples, couples-only identification (misses single LGBTQ+ individuals). Twin studies (Amin et al. 2021) help address selection."
+    ]},
+    {heading:"Connections to Course Frameworks",points:[
+      "Gay penalty connects to masculinity norms: men punished for perceived norm violation. Links to boys’ educational problems (oppositional culture), men’s avoidance of female-coded jobs, and competition as gendered behavior.",
+      "Lesbian premium connects to specialization: less household specialization, more continuous work experience, fewer child-related career interruptions. Becker’s model fails because same-sex couples specialize LESS even with children.",
+      "Schilt & Wiswall (2008): the cleanest possible discrimination test. Within-person comparison before and after gender transition — same skills, same education, different perceived gender. Trans women face large penalties; trans men face smaller penalties or gains. Directly isolates gender discrimination from productivity.",
+      "Geijtenbeek & Plug (2018): replicates the trans wage pattern in Dutch administrative data.",
+      "Carpenter & Sansone (2020): gay men are significantly underrepresented in STEM, mirroring women’s pattern. Suggests gender norms in STEM operate through masculinity expectations broadly, not just against women."
+    ]},
+    {heading:"Same-Sex Couples as the Final Test of Becker",points:[
+      "Andresen & Nix (2022): Norwegian same-sex female couples show SMALLER child penalties, and BOTH mothers reduce earnings (not just one).",
+      "SOGIE slides: same-sex couples are more likely to be dual-earner, show less specialization. Absence of gender complementarities reduces incentives to specialize.",
+      "Lundberg (Last Class): same-sex couples’ lower specialization, even with children, is ‘very revealing.’ If Becker were right about biological comparative advantage, one partner would still specialize based on individual productivity. Instead, they share equally.",
+      "This reveals that specialization in different-sex couples is maintained by GENDER NORMS, not by who is objectively more productive at home or in the market.",
+      "The course treats this as the definitive refutation of the Beckerian framework — the final nail, built on converging evidence from adoptive parents, cross-cultural variation, and now same-sex couples."
+    ]}
+  ]},
+];
+
+const FLASHCARDS=[
+  {theme:"roles",front:"Goldin (2006): What are the 4 phases of women's labor force transition?",back:"Phase I (1800s-1920s): Young unmarried, manufacturing. Phase II (1930s-1950): Clerical expansion, married enter. Phase III (1950s-70s): Rapid growth, still secondary. Phase IV (late 1970s+): REVOLUTION - changed expectations, career investment, delayed marriage."},
+  {theme:"roles",front:"Why is Phase IV 'revolutionary'?",back:"EXPECTATIONS changed, not just labor supply. Women planned lifelong careers, causing upstream changes in education, occupation, marriage timing. Work became identity."},
+  {theme:"roles",front:"Coile & Duggan (2019): Main finding?",back:"Declining opportunity for low-skilled men leads to rising mortality, disability, family instability, incarceration. Education is key protective factor. Male median earnings flat since early 1970s."},
+  {theme:"education",front:"GKK (2006): How much of the female college advantage is 'explained'?",back:"About 40% by HS preparation (mainly grades). The remaining 60% = behavioral/aspirational gaps."},
+  {theme:"education",front:"Reeves vs. DiPrete & Buchmann on boys' underperformance?",back:"Reeves: brain development (biology). DiPrete & Buchmann: masculine 'oppositional culture' - rejection of school values (norms). Course position: innate framing is 'probably a mistake.'"},
+  {theme:"education",front:"Lundberg (2020): Can the aspiration gap be explained?",back:"No. Add Health data. Kitchen-sink regressions explain only 25-30%. Gender itself is the predictor."},
+  {theme:"education",front:"Brenoe & Zolitz (2020): What happens with more female peers?",back:"+10pp female peers = -6.4% women's STEM, +2.4% men's, +17% gender gap. Effect vanishes if mother is in STEM."},
+  {theme:"family",front:"What are the 5 economic benefits of marriage?",back:"Economies of scale, specialization & exchange, household public goods, risk-pooling, consumption externalities (altruism, shared leisure)."},
+  {theme:"family",front:"Becker's unitary model: What is pooling and why is it wrong?",back:"Source of income shouldn't matter, only total. WRONG: UK child benefit (LPW 1997) shifted spending. Duflo (2000) grandmother vs grandfather. Thomas (1990) mother's effect 20x larger."},
+  {theme:"family",front:"Divorce-threat vs. separate spheres bargaining?",back:"Divorce-threat (McElroy & Horney 1981): threat = utility if divorced. Separate spheres (Lundberg & Pollak 1993): threat = noncooperative equilibrium WITHIN marriage."},
+  {theme:"family",front:"Duflo (2000): South African pension result?",back:"Grandmother pensions improved child height (esp. girls). Grandfather pensions had no effect. Girls bridged about half the gap with American girls. Rejects income pooling."},
+  {theme:"family",front:"Doepke & Kindermann (2019): Fertility disagreement?",back:"Women veto children more where men do less childcare and mothers are less likely employed. Each partner has veto power. Policy: childcare subsidies beat cash bonuses."},
+  {theme:"family",front:"What caused the 1970s divorce spike?",back:"1. Unilateral divorce (cheaper/easier). 2. Women's employment upended expectations ('surprise'). 3. Mixed-gender workplaces enabled partner search."},
+  {theme:"violence",front:"Card & Dahl (2011): Finding and method?",back:"Upset NFL home loss = +10% IPV. NIBRS police data + betting market point spreads for identification. Supports expressive/loss-of-control model."},
+  {theme:"violence",front:"Aizer (2010): Finding and method?",back:"Narrowing CA gender wage gap = about 9% decline in female assault hospitalizations. Uses predicted wages from industry shifts (avoids endogeneity). Supports bargaining/exit model."},
+  {theme:"violence",front:"Adams et al. (2024): What's new?",back:"Finnish admin data tracks abusers across partners. Women's earnings fall IMMEDIATELY upon cohabiting - even partners who never report violence. Bridges expressive + instrumental motives."},
+  {theme:"violence",front:"The empowerment-violence paradox?",back:"High-income countries: better options = less IPV (exit works). Patriarchal countries: empowerment = more IPV (backlash without exit). Moderator: credible exit options."},
+  {theme:"wagegap",front:"Blau & Kahn (2000): Key numbers?",back:"F/M ratio about 80%. Without occupation controls: about 85% unexplained. WITH occupation/industry: about 40% unexplained."},
+  {theme:"wagegap",front:"Niederle & Vesterlund (2011): Tournament experiment?",back:"73% of men vs. 35% of women chose tournament despite equal performance. 1/3 = overconfidence (75% vs 43% think they're best). 2/3 = aversion to competition itself."},
+  {theme:"wagegap",front:"Evidence competition aversion is socially constructed?",back:"Reversed in matrilineal Khasi vs. patrilineal Maasai. Doesn't appear until adolescence. No gap in Swedish kids age 7-10. Team competition reduces gap."},
+  {theme:"wagegap",front:"Nelson's critique of risk aversion literature?",back:"Publication bias, incorrect citation of prior results, selective emphasis of confirming findings. Statistical evidence from distribution of standard errors. Course says: 'now ambiguous.'"},
+  {theme:"wagegap",front:"Goldin (2014): Greedy jobs?",back:"Nonlinear hours-wage schedules. Workers are imperfect substitutes (client-specific knowledge). Working 70hrs earns far more than 2x of 35hrs. Penalizes those needing flexibility (mothers)."},
+  {theme:"wagegap",front:"Goldin & Katz (2016): Why did pharmacy's gap close?",back:"Corporate consolidation + IT + standardization made pharmacists substitutable. Part-time penalty near zero. Ownership premium: 16% (1970) to 0% today. Female share: under 5% to over 60%."},
+  {theme:"wagegap",front:"Name 4 recent workplace discrimination studies.",back:"Sarsons (2019): surgeon referral bias. Egan et al. (2022): gender punishment gap in finance. Babcock et al. (2017): non-promotable work. Cullen & Perez-Truglia (2023): old boys' club via smoking breaks."},
+  {theme:"penalty",front:"Kleven et al. (2019): Key child penalty numbers?",back:"Women: about 30% immediate drop, stabilizes at about 20% at 10 years (same at 20). Men: about 0%. Penalty = 19.4% at 10 years. Danish admin data, 470K births."},
+  {theme:"penalty",front:"Kleven (2019): What explains cross-country variation in child penalties?",back:"Gender role ATTITUDES, not policy generosity. Also intergenerational: grandmother's work patterns predict daughter's penalty."},
+  {theme:"penalty",front:"Kleven et al. (2021): Does biology explain the penalty?",back:"NO. Adoptive vs. biological parents. No long-run difference. 'Cannot be understood through biology and incentive-based specialization.'"},
+  {theme:"penalty",front:"Kleven (Austria, 2024): What happened with policy reform?",back:"Leave up to 30 months + childcare expansion. Effect on penalty: ZERO. Fertility: ZERO. Leave too long, childcare crowds out informal care, norms too strong."},
+  {theme:"penalty",front:"Goldin vs. Kleven on closing the penalty?",back:"Goldin: restructure jobs (make workers substitutable). Kleven: policy fails. SYNTHESIS: different levers. Policy = symptoms. Restructuring = cause. Norms = binding constraint."},
+  {theme:"development",front:"Jayachandran (2021): What are the 5 norm barriers?",back:"1. Safety. 2. Restricted mobility. 3. Money control. 4. Male backlash. 5. Domestic burden."},
+  {theme:"development",front:"Bursztyn et al. (2020): Saudi Arabia key numbers?",back:"87% of men support WWOH but guess only 63%. 72% underestimate. Treatment: job signup +36%, wife applications +180% at 3-5 months."},
+  {theme:"development",front:"What is pluralistic ignorance?",back:"Most people privately hold opinion X but believe most others hold the opposite. They act against their own view for fear of social sanction. Correcting beliefs about OTHERS changes behavior."},
+  {theme:"development",front:"Field et al. (2021): India bank accounts?",back:"RCT in Madhya Pradesh. Direct deposit increased women's work (especially previously non-working women). Men's own attitudes didn't change, but their perception of community norms shifted."},
+  {theme:"development",front:"Duflo (2012): Does empowerment drive growth?",back:"Link is 'not transformational.' Gender equality should be pursued as a fundamental objective, not merely as a means to growth."},
+  {theme:"sogie",front:"Badgett et al. (2024): 4 stylized facts?",back:"1. Gay men earn less (gay penalty). 2. Lesbian women earn more (lesbian premium). 3. Trans individuals earn less. 4. Bisexual often worst outcomes."},
+  {theme:"sogie",front:"Schilt & Wiswall (2008): Why is this the 'cleanest' discrimination test?",back:"Within-person comparison before and after gender transition. Same skills, same education, different perceived gender. Trans women: large penalties. Trans men: smaller penalties or gains."},
+  {theme:"sogie",front:"Andresen & Nix (2022): Same-sex couple child penalties?",back:"Norwegian data. SMALLER penalties, and BOTH mothers reduce earnings (not just one). Confirms norms and discrimination, not biology, drive the penalty."},
+  {theme:"sogie",front:"Why is same-sex couples' lower specialization 'very revealing'?",back:"If Becker were right (biological comparative advantage), one partner would still specialize. Instead they share equally. Reveals specialization in different-sex couples = GENDER NORMS, not productivity."},
+];
+
+const QUIZ_QUESTIONS=[
+  {theme:"roles",question:"What distinguishes Phase IV in Goldin's framework?",options:["Women's wages rose faster","Women planned for lifelong careers based on changed expectations","Government mandated equal pay","College quotas for women"],answer:1},
+  {theme:"education",question:"Brenoe & Zolitz: +10pp female peers caused:",options:["+6.4% women's STEM","-6.4% women's STEM and +2.4% men's","No effect on STEM","Equal reductions for both"],answer:1},
+  {theme:"education",question:"Lundberg (2020): The aspirations gap is explained by:",options:["Cognitive skills","Family background","School performance","None - unexplained by observables"],answer:3},
+  {theme:"family",question:"Lundberg, Pollak & Wales (1997) UK child benefit found:",options:["No spending change","Shift to men's clothing","Shift to women's and children's clothing","Increased savings"],answer:2},
+  {theme:"family",question:"Duflo (2000): Which pensions improved child health?",options:["Both equally","Grandfather only","Grandmother only (especially girls)","Neither"],answer:2},
+  {theme:"violence",question:"Card & Dahl: Upset NFL home loss leads to:",options:["-5% IPV","+10% male-on-female IPV","+25% all violence","No significant change"],answer:1},
+  {theme:"violence",question:"Key moderator for empowerment and violence relationship:",options:["Development level","Credible exit options (divorce access)","Type of employment","Couple's age"],answer:1},
+  {theme:"wagegap",question:"Overconfidence explains what fraction of N&V's competition gap?",options:["All of it","About two-thirds","About one-third","None - it's entirely risk aversion"],answer:2},
+  {theme:"wagegap",question:"Pharmacy's small gender gap is primarily due to:",options:["Affirmative action policies","Industry consolidation + IT making pharmacists substitutable","Women's higher average education","Government wage regulation"],answer:1},
+  {theme:"wagegap",question:"Nelson's critique argues the risk aversion literature:",options:["Women are definitively more risk averse","Suffers from publication bias and stereotype-driven interpretation","Has no relationship to labor markets","Men are actually more risk averse"],answer:1},
+  {theme:"penalty",question:"Kleven (2019): Child penalty for women stabilizes at:",options:["-5% after 5 years","-10% after 10 years","-20% after 10 years","-40% after 20 years"],answer:2},
+  {theme:"penalty",question:"Kleven (2021) compared adoptive and biological parents and found:",options:["Biological mothers had larger penalties","Adoptive mothers had larger penalties","No long-run difference - biology doesn't explain it","Both had zero penalties"],answer:2},
+  {theme:"penalty",question:"Austria's 30-month maternal leave effect on the motherhood penalty:",options:["Reduced it by about 15%","Reduced it by about 5%","Zero effect","Actually increased the penalty"],answer:2},
+  {theme:"development",question:"What percentage of Saudi men privately support women working outside the home?",options:["About 50%","About 63%","About 87%","About 95%"],answer:2},
+  {theme:"development",question:"Field et al. (2021) India direct deposit:",options:["Changed men's own attitudes about women working","Had no effect on women's labor supply","Increased women's work and shifted men's perception of community norms","Only affected women who had previously worked"],answer:2},
+  {theme:"sogie",question:"Schilt & Wiswall (2008) found that after gender transition:",options:["Both trans women and trans men experienced earnings penalties","Trans women experienced penalties; trans men experienced smaller penalties or gains","Neither group experienced significant wage changes","Both groups experienced earnings gains"],answer:1},
+  {theme:"sogie",question:"Same-sex couples' lower specialization is 'very revealing' because:",options:["It shows same-sex couples are less productive at home","It reveals specialization in different-sex couples is driven by gender norms, not biological comparative advantage","It proves Becker's unitary model is correct","It demonstrates children require less care in same-sex households"],answer:1},
+  {theme:"family",question:"Doepke & Kindermann (2019): Women are more likely to disagree about having children where:",options:["Women earn more than men","Men do less childcare and mothers are less likely to be employed","Fertility rates are already very high","Government provides generous baby bonuses"],answer:1},
+  {theme:"wagegap",question:"Cullen & Perez-Truglia (2023): Socializing with male managers during smoking breaks:",options:["Had no effect on promotions","Increased promotion rates equally for men and women","Resulted in higher promotion rates for male employees relative to female","Led to decreased productivity for all employees"],answer:2},
+  {theme:"development",question:"Duflo (2012) argues the link from women's empowerment to economic growth is:",options:["Very strong and well-established","Not strong; gender equality should be pursued as a fundamental objective","Negative - empowerment hurts growth","Only positive in high-income countries"],answer:1},
+];
+
+const MATCHUP_ITEMS=[
+  {paper:"Goldin (2006)",match:"4 phases of women's transition; Phase IV = revolution in expectations"},
+  {paper:"Blau & Kahn (2000)",match:"F/M ratio ~80%, ~40% unexplained with occupation controls"},
+  {paper:"Kleven et al. (2019)",match:"~20% child penalty for mothers, ~0% for fathers (Danish data)"},
+  {paper:"Card & Dahl (2011)",match:"Upset NFL loss = +10% intimate partner violence"},
+  {paper:"Bursztyn et al. (2020)",match:"87% of Saudi men support WWOH but guess only 63%"},
+  {paper:"N & V (2011)",match:"73% vs 35% chose tournament; 1/3 overconfidence, 2/3 competition aversion"},
+  {paper:"Duflo (2000)",match:"Grandmother pension improves child health; grandfather pension does nothing"},
+  {paper:"Brenoe & Zolitz (2020)",match:"+10pp female peers = -6.4% women's STEM enrollment"},
+  {paper:"Goldin & Katz (2016)",match:"Pharmacy: substitutability = linear pay = smallest gender gap"},
+  {paper:"Adams et al. (2024)",match:"Abusers' partners lose earnings immediately upon cohabiting"},
+  {paper:"Kleven et al. (2021)",match:"Adoptive = biological parents; biology does not explain penalty"},
+  {paper:"Field et al. (2021)",match:"India bank accounts increase women's work + shift norm perceptions"},
+  {paper:"Andresen & Nix (2022)",match:"Same-sex couples: smaller, more equally shared child penalties"},
+  {paper:"Schilt & Wiswall (2008)",match:"Trans women penalized, trans men gain - same person, new gender"},
+  {paper:"Aizer (2010)",match:"CA wage gap narrowing = 9% decline in female assault hospitalizations"},
+  {paper:"LPW (1997)",match:"UK child benefit to mothers shifts spending to women's/children's clothing"},
+];
+
+const NUMBER_BLITZ=[
+  {q:"F/M earnings ratio through 1980?",a:"~60%",accept:["60","60%"]},
+  {q:"F/M earnings ratio late 1990s?",a:"~80%",accept:["80","80%"]},
+  {q:"Unexplained gap WITHOUT occupation controls?",a:"~85%",accept:["85","85%"]},
+  {q:"Unexplained gap WITH occupation controls?",a:"~40%",accept:["40","40%"]},
+  {q:"Men choosing tournament (N&V)?",a:"73%",accept:["73","73%"]},
+  {q:"Women choosing tournament (N&V)?",a:"35%",accept:["35","35%"]},
+  {q:"Men thinking they're the best (N&V)?",a:"75%",accept:["75","75%"]},
+  {q:"Women thinking they're the best (N&V)?",a:"43%",accept:["43","43%"]},
+  {q:"Overconfidence explains what fraction of competition gap?",a:"~1/3",accept:["1/3","one third","a third","33"]},
+  {q:"Child penalty at 10 years for women (Denmark)?",a:"~20%",accept:["20","20%","19.4","19.4%"]},
+  {q:"Immediate earnings drop at childbirth (women)?",a:"~30%",accept:["30","30%"]},
+  {q:"Child penalty for men?",a:"~0%",accept:["0","0%","zero","none"]},
+  {q:"Saudi men privately supporting WWOH?",a:"87%",accept:["87","87%"]},
+  {q:"Saudi men's average GUESS of peer support?",a:"63%",accept:["63","63%"]},
+  {q:"Saudi treatment effect on wife job applications?",a:"+180%",accept:["180","180%"]},
+  {q:"Aizer: wage gap narrowing explains what % of assault decline?",a:"~9%",accept:["9","9%"]},
+  {q:"Card & Dahl: upset loss increases IPV by?",a:"~10%",accept:["10","10%"]},
+  {q:"Thomas (1990): Mother's income vs father's for child survival?",a:"20x larger",accept:["20x","20 times","20"]},
+  {q:"Pharmacy ownership premium in 1970?",a:"~16%",accept:["16","16%"]},
+  {q:"Pharmacy ownership premium today?",a:"0%",accept:["0","0%","zero"]},
+  {q:"Austria max maternal leave (2000 reform)?",a:"30 months",accept:["30","30 months"]},
+  {q:"Austria policy effect on motherhood penalty?",a:"Zero",accept:["zero","0","none"]},
+  {q:"India (Field): % of women with say in whether they work?",a:"28%",accept:["28","28%"]},
+  {q:"Brenoe & Zolitz: +10pp female peers effect on women's STEM?",a:"-6.4%",accept:["6.4","-6.4","-6.4%"]},
+];
+
+const TFU_STATEMENTS=[
+  {statement:"The motherhood wage penalty is primarily caused by the biological demands of childbirth and breastfeeding.",verdict:"False",explanation:"Kleven et al. (2021) compared adoptive and biological parents in Denmark and found no long-run difference. Andresen & Nix (2022) found same-sex female couples share penalties more equally. The penalty is driven by gender norms about who adjusts their career for children, not by childbirth itself."},
+  {statement:"The shift to no-fault (unilateral) divorce had no long-term effect on divorce rates, just as economists predicted.",verdict:"Uncertain",explanation:"Short-run: prediction was WRONG - massive spike as cheap exit dissolved unhappy marriages. Long-run: fairly small effect on rates (partially right). But other important effects persisted: reduced marriage rates overall, less specialization, some evidence of reduced domestic violence."},
+  {statement:"In Saudi Arabia, most men oppose women working outside the home, which is why female LFP is so low.",verdict:"False",explanation:"Bursztyn et al. (2020) found that 87% of Saudi men privately SUPPORT women working. The problem is pluralistic ignorance - men vastly underestimate peer support (average guess: 63%). Correcting misperceptions increased wives' job applications by 180%."},
+  {statement:"Women's relative avoidance of competition is caused primarily by their tendency to underestimate their own ability.",verdict:"False",explanation:"Women DO overestimate their ability on average - they just overestimate LESS than men. Overconfidence explains about 1/3 of the gap. The main cause (about 2/3) is aversion to competition itself, especially in mixed-sex settings. Cross-cultural reversal in Khasi matrilineal society suggests social construction."},
+  {statement:"Subsidized childcare is an effective tool for reducing the motherhood wage penalty.",verdict:"Uncertain",explanation:"Austria (Kleven 2024): multiple childcare expansions had ZERO effect (crowds out informal care, norms too strong). Norway: also zero. But Quebec: YES, substantial increase in employment - universal, cheap, high-quality. Effectiveness depends on program design, price, informal care networks, and norms."},
+  {statement:"Same-sex couples provide evidence supporting Becker's specialization model.",verdict:"False",explanation:"Same-sex couples specialize LESS even with children. If biological comparative advantage drove specialization, we'd expect some specialization regardless of couple type. Instead, the absence of gender-role expectations produces more equality. Lundberg calls this 'very revealing.'"},
+  {statement:"Improving women's economic opportunities always reduces intimate partner violence.",verdict:"False",explanation:"True in high-income countries with accessible divorce (Aizer 2010, Anderberg 2016). But in patriarchal developing countries where divorce is difficult, empowerment can INCREASE IPV through male backlash (Jayachandran 2021). Key moderator: whether women have credible EXIT options."},
+];
+
+const CONNECTION_PAIRS=[
+  {paper1:"Kleven et al. (2021) - adoptive vs biological parents",paper2:"Andresen & Nix (2022) - same-sex couple child penalties",hint:"Both dismantle Becker from different angles. Kleven removes biology (adoptive parents still penalized equally). Andresen removes gender roles (both mothers reduce earnings). Together they establish: norms, not biology, drive the penalty."},
+  {paper1:"Goldin (2014) - greedy jobs",paper2:"Kleven (Austria, 2024) - policy has zero effect",hint:"Different levers tested. Goldin: demand-side market restructuring (making workers substitutable) CAN close the gap. Kleven: supply-side government subsidies (leave, childcare) CANNOT. Synthesis: complementary, not contradictory. Both agree norms are the binding constraint."},
+  {paper1:"Brenoe & Zolitz (2020) - female peers widen STEM gap",paper2:"Beaman et al. (2012) - female leaders raise aspirations",hint:"Opposite signs on 'female presence.' Peers = anonymous conformity channel. Leaders = visible aspiration channel. Key: Brenoe & Zolitz find STEM mothers nullify the peer effect. Also: Denmark (already egalitarian) vs. India (restrictive) and adolescents vs. adults."},
+  {paper1:"Aizer (2010) - better wages reduce CA violence",paper2:"Jayachandran (2021) - empowerment increases violence in patriarchal settings",hint:"Opposite signs on the same variable (women's economic position). Moderator: credible EXIT options. In CA with accessible divorce: exit threat works. In patriarchal settings without divorce: income without escape = provocation without an escape route."},
+  {paper1:"N & V (2011) - women avoid competition",paper2:"Nelson - risk aversion literature critique",hint:"N&V find robust competition aversion. Nelson challenges the broader 'women have different preferences' story by showing the risk aversion literature has publication bias. Together: competition aversion is more robust than risk aversion, but both may reflect perceived constraints rather than true preferences."},
+  {paper1:"Duflo (2000) - SA grandmother pensions",paper2:"LPW (1997) - UK child benefit",hint:"Both reject income pooling using quasi-natural experiments. Different countries, different policies, same conclusion: who receives income changes how it's spent. Together they killed the unitary model empirically."},
+  {paper1:"Bursztyn et al. (2020) - Saudi pluralistic ignorance",paper2:"Field et al. (2021) - India bank accounts",hint:"Both find social norms constrain women's employment AND that norms can shift. Bursztyn: correcting beliefs about others' views changes behavior. Field: experience with working women shifts community norm perceptions. Both identify men's PERCEPTION of community norms as the key lever."},
+  {paper1:"GKK (2006) - college gender gap",paper2:"DiPrete & Buchmann (2006) - oppositional culture",hint:"GKK document the gap and attribute it to 'non-cognitive skills.' DiPrete & Buchmann provide the mechanism: masculine identity formation involves rejecting school values, reinforced by peers. Together: falling barriers for women exposed boys' pre-existing norm-driven problems."},
+];
+
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+// ── Progress Tracker (persisted in memory) ──
+const useProgress = () => {
+  const [stats, setStats] = useState({flashcardsStudied:0,quizzesTaken:0,quizHighScore:0,blitzHighScore:0,matchupsCompleted:0,tfuCorrect:0,tfuTotal:0,connectionsViewed:0});
+  const update = (key, val) => setStats(s => ({...s, [key]: typeof val === 'function' ? val(s[key]) : val}));
+  return [stats, update];
+};
+
+// ── Learn ──
+function Learn({theme}){
+  const items = theme==="all" ? LEARN_CONTENT : LEARN_CONTENT.filter(l=>l.theme===theme);
+  const [open, setOpen] = useState(null);
+  return React.createElement('div',null,
+    items.map((sec,si) => React.createElement('div',{key:si,className:"learn-section",style:{borderColor:open===si?'var(--accent)':'var(--bd)'}},
+      React.createElement('div',{className:"learn-header",onClick:()=>setOpen(open===si?null:si),style:{background:open===si?'var(--accentL)':'transparent'}},
+        React.createElement('div',null,
+          React.createElement('div',{style:{fontSize:15,fontWeight:700}},sec.title),
+          React.createElement('div',{style:{fontSize:12,color:'var(--ts2)',fontStyle:'italic',marginTop:2}},sec.week)
+        ),
+        React.createElement('div',{style:{fontSize:18,color:'var(--accent)'}},open===si?'\u2212':'+')
+      ),
+      open===si && React.createElement('div',{className:"learn-body"},
+        sec.content.map((block,bi) => React.createElement('div',{key:bi},
+          React.createElement('div',{className:"learn-heading"},block.heading),
+          block.points.map((pt,pi) => React.createElement('div',{key:pi,className:"learn-point"},pt))
+        ))
+      )
+    ))
+  );
+}
+
+// ── Pomodoro ──
+function Pomodoro(){
+  const [mode,setMode]=useState("work"),[tl,setTl]=useState(1500),[run,setRun]=useState(false),[sess,setSess]=useState(0);
+  const ref=useRef();
+  useEffect(()=>{if(run){ref.current=setInterval(()=>setTl(t=>{if(t<=1){clearInterval(ref.current);setRun(false);if(mode==="work"){setSess(s=>s+1);setMode("break");return 300}else{setMode("work");return 1500}}return t-1}),1000)}return()=>clearInterval(ref.current)},[run,mode]);
+  const m=Math.floor(tl/60),s=tl%60,total=mode==="work"?1500:300,pct=((total-tl)/total)*100;
+  return React.createElement('div',{style:{textAlign:'center',padding:'2rem 1rem'}},
+    React.createElement('div',{style:{fontSize:11,textTransform:'uppercase',letterSpacing:2.5,color:'var(--ts2)',marginBottom:12}},mode==="work"?"\u2727 focus session \u2727":"\u2615 break time \u2615"),
+    React.createElement('div',{style:{fontSize:56,fontWeight:400,letterSpacing:2}},String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')),
+    React.createElement('div',{className:'progress-bar',style:{maxWidth:220,margin:'16px auto'}},React.createElement('div',{className:'progress-fill',style:{width:pct+'%',background:mode==="work"?'var(--accent)':'var(--green)'}})),
+    React.createElement('div',{style:{display:'flex',gap:8,justifyContent:'center',marginTop:16}},
+      React.createElement('button',{className:'pill',onClick:()=>setRun(!run),style:{background:run?'var(--coralL)':'transparent'}},run?'Pause':'Start'),
+      React.createElement('button',{className:'pill',onClick:()=>{setRun(false);setTl(mode==="work"?1500:300)}},'Reset')
+    ),
+    React.createElement('div',{style:{fontSize:13,color:'var(--ts2)',marginTop:14,fontStyle:'italic'}},sess+' session'+(sess!==1?'s':'')+' done')
+  );
+}
+
+// ── Flashcards ──
+function Flashcards({cards,onStudy}){
+  const [dk,setDk]=useState(()=>shuffle(cards)),[idx,setIdx]=useState(0),[fl,setFl]=useState(false),[known,setKnown]=useState(0);
+  useEffect(()=>{setDk(shuffle(cards));setIdx(0);setFl(false);setKnown(0)},[cards]);
+  const card=dk[idx];
+  if(!card) return React.createElement('div',{style:{padding:24,textAlign:'center',color:'var(--ts2)',fontStyle:'italic'}},'No cards for this filter.');
+  const next=(gotIt)=>{if(gotIt)setKnown(k=>k+1);onStudy&&onStudy();setFl(false);if(idx+1>=dk.length){setDk(shuffle(cards));setIdx(0)}else setIdx(i=>i+1)};
+  return React.createElement('div',null,
+    React.createElement('div',{style:{display:'flex',justifyContent:'space-between',fontSize:12,color:'var(--ts2)',marginBottom:10,fontStyle:'italic'}},
+      React.createElement('span',null,'Card '+(idx+1)+'/'+dk.length),
+      React.createElement('span',null,known+' mastered')
+    ),
+    React.createElement('div',{className:'progress-bar'},React.createElement('div',{className:'progress-fill',style:{width:((idx+1)/dk.length*100)+'%',background:'var(--accent)'}})),
+    React.createElement('div',{onClick:()=>setFl(!fl),style:{minHeight:200,padding:'2rem 1.5rem',cursor:'pointer',borderRadius:14,border:'1.5px solid '+(fl?'var(--green)':'var(--accent)'),background:fl?'var(--greenL)':'var(--accentL)',transition:'all .3s',display:'flex',alignItems:'center',justifyContent:'center',marginTop:10}},
+      React.createElement('div',{style:{textAlign:'center',maxWidth:520}},
+        React.createElement('div',{style:{fontSize:10,textTransform:'uppercase',letterSpacing:2,color:fl?'var(--green)':'var(--accent)',marginBottom:14}},fl?'\u2713 answer \u00b7 tap to flip':'\u2753 question \u00b7 tap to flip'),
+        React.createElement('div',{style:{fontSize:15,lineHeight:1.7,color:'var(--tp)'}},fl?card.back:card.front)
+      )
+    ),
+    fl && React.createElement('div',{style:{display:'flex',gap:8,marginTop:14,justifyContent:'center'}},
+      React.createElement('button',{className:'pill',onClick:()=>next(false),style:{color:'var(--coral)',borderColor:'var(--coral)'}},'Still learning'),
+      React.createElement('button',{className:'pill',onClick:()=>next(true),style:{color:'var(--green)',borderColor:'var(--green)'}},'Got it \u2713')
+    )
+  );
+}
+
+// ── Quiz ──
+function Quiz({questions,onComplete}){
+  const [qs,setQs]=useState(()=>shuffle(questions).slice(0,Math.min(10,questions.length)));
+  const [idx,setIdx]=useState(0),[sel,setSel]=useState(null),[sh,setSh]=useState(false),[sc,setSc]=useState(0),[dn,setDn]=useState(false),[ans,setAns]=useState([]);
+  const restart=useCallback(()=>{setQs(shuffle(questions).slice(0,Math.min(10,questions.length)));setIdx(0);setSel(null);setSh(false);setSc(0);setDn(false);setAns([])},[questions]);
+  useEffect(()=>{restart()},[questions,restart]);
+  if(dn){onComplete&&onComplete(sc,qs.length);
+    return React.createElement('div',{style:{textAlign:'center',padding:'2rem'}},
+      React.createElement('div',{style:{fontSize:48}},sc+'/'+qs.length),
+      React.createElement('div',{style:{fontSize:14,color:'var(--ts2)',fontStyle:'italic',marginBottom:20}},Math.round(sc/qs.length*100)+'%'),
+      ans.filter(a=>!a.c).length>0 && React.createElement('div',{style:{textAlign:'left',marginBottom:20}},
+        React.createElement('div',{style:{fontSize:13,fontWeight:700,color:'var(--coral)',marginBottom:10,fontStyle:'italic'}},'Review missed:'),
+        ans.filter(a=>!a.c).map((a,i)=>React.createElement('div',{key:i,style:{fontSize:13,marginBottom:10,padding:12,borderRadius:10,background:'var(--coralL)'}},
+          React.createElement('div',{style:{fontWeight:700,marginBottom:4}},a.q),
+          React.createElement('div',{style:{color:'var(--coral)'}},'You: '+a.y),
+          React.createElement('div',{style:{color:'var(--green)'}},'Correct: '+a.r)
+        ))
+      ),
+      React.createElement('button',{className:'pill on',onClick:restart},'New quiz')
+    );
+  }
+  const q=qs[idx];
+  const submit=()=>{if(sel===null)return;const c2=sel===q.answer;if(c2)setSc(s=>s+1);setAns(a=>[...a,{q:q.question,c:c2,y:q.options[sel],r:q.options[q.answer]}]);setSh(true)};
+  return React.createElement('div',null,
+    React.createElement('div',{style:{fontSize:12,color:'var(--ts2)',marginBottom:8,fontStyle:'italic'}},'Q '+(idx+1)+'/'+qs.length+' \u00b7 Score: '+sc+'/'+(idx+(sh?1:0))),
+    React.createElement('div',{className:'progress-bar'},React.createElement('div',{className:'progress-fill',style:{width:((idx+1)/qs.length*100)+'%',background:'var(--blue)'}})),
+    React.createElement('div',{style:{fontSize:15,fontWeight:700,marginBottom:18,lineHeight:1.6,marginTop:10}},q.question),
+    q.options.map((opt,i)=>{
+      let bg='transparent',bd='var(--bd)';
+      if(sh&&i===q.answer){bg='var(--greenL)';bd='var(--green)'}
+      else if(sh&&i===sel&&i!==q.answer){bg='var(--coralL)';bd='var(--coral)'}
+      else if(!sh&&i===sel){bg='var(--accentL)';bd='var(--accent)'}
+      return React.createElement('div',{key:i,onClick:()=>!sh&&setSel(i),style:{padding:'10px 14px',marginBottom:8,borderRadius:10,fontSize:14,lineHeight:1.6,border:'1.5px solid '+bd,background:bg,cursor:sh?'default':'pointer',transition:'all .2s',color:'var(--tp)'}},opt);
+    }),
+    React.createElement('div',{style:{marginTop:14,textAlign:'center'}},
+      !sh?React.createElement('button',{className:'pill on',onClick:submit,disabled:sel===null,style:{opacity:sel===null?0.4:1}},'Check answer')
+      :React.createElement('button',{className:'pill on',onClick:()=>{setSel(null);setSh(false);if(idx+1>=qs.length)setDn(true);else setIdx(i=>i+1)},style:{background:'var(--green)',borderColor:'var(--green)'}},idx+1>=qs.length?'See results':'Next \u2192')
+    )
+  );
+}
+
+// ── Matchup ──
+function Matchup({onComplete}){
+  const [items,setItems]=useState(()=>{const s=shuffle(MATCHUP_ITEMS).slice(0,6);return{papers:shuffle(s.map(x=>x.paper)),findings:shuffle(s.map(x=>x.match)),correct:Object.fromEntries(s.map(x=>[x.paper,x.match]))}});
+  const [sp,setSp]=useState(null),[matched,setMatched]=useState({}),[wrong,setWrong]=useState(null);
+  const hf=f=>{if(!sp)return;if(items.correct[sp]===f){setMatched(m=>({...m,[sp]:f}));setSp(null);setWrong(null)}else{setWrong(f);setTimeout(()=>setWrong(null),800)}};
+  const isDone=Object.keys(matched).length===items.papers.length;
+  useEffect(()=>{if(isDone&&onComplete)onComplete()},[isDone]);
+  const restart=()=>{const s=shuffle(MATCHUP_ITEMS).slice(0,6);setItems({papers:shuffle(s.map(x=>x.paper)),findings:shuffle(s.map(x=>x.match)),correct:Object.fromEntries(s.map(x=>[x.paper,x.match]))});setMatched({});setSp(null);setWrong(null)};
+  if(isDone) return React.createElement('div',{style:{textAlign:'center',padding:'2rem'}},
+    React.createElement('div',{style:{fontSize:28}},'All matched! \u2727'),
+    React.createElement('div',{style:{fontSize:14,color:'var(--ts2)',fontStyle:'italic',margin:'8px 0 16px'}},'6/6'),
+    React.createElement('button',{className:'pill on',onClick:restart},'Play again')
+  );
+  return React.createElement('div',null,
+    React.createElement('div',{style:{fontSize:12,color:'var(--ts2)',fontStyle:'italic',marginBottom:8}},Object.keys(matched).length+'/6 matched. Tap a paper, then its finding.'),
+    React.createElement('div',{className:'progress-bar'},React.createElement('div',{className:'progress-fill',style:{width:(Object.keys(matched).length/6*100)+'%',background:'var(--gold)'}})),
+    React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:8}},
+      React.createElement('div',null,
+        React.createElement('div',{style:{fontSize:10,textTransform:'uppercase',letterSpacing:2,color:'var(--accent)',marginBottom:8}},'Papers'),
+        items.papers.map(p=>{const m=matched[p];return React.createElement('div',{key:p,onClick:()=>!m&&setSp(p),style:{padding:'8px 10px',marginBottom:6,borderRadius:8,fontSize:12,lineHeight:1.4,border:'1.5px solid '+(m?'var(--green)':sp===p?'var(--accent)':'var(--bd)'),background:m?'var(--greenL)':sp===p?'var(--accentL)':'transparent',cursor:m?'default':'pointer',opacity:m?0.6:1,transition:'all .2s',color:'var(--tp)'}},p+(m?' \u2713':''))})
+      ),
+      React.createElement('div',null,
+        React.createElement('div',{style:{fontSize:10,textTransform:'uppercase',letterSpacing:2,color:'var(--gold)',marginBottom:8}},'Findings'),
+        items.findings.map(f=>{const m=Object.values(matched).includes(f);return React.createElement('div',{key:f,onClick:()=>hf(f),style:{padding:'8px 10px',marginBottom:6,borderRadius:8,fontSize:11,lineHeight:1.4,border:'1.5px solid '+(m?'var(--green)':wrong===f?'var(--coral)':'var(--bd)'),background:m?'var(--greenL)':wrong===f?'var(--coralL)':'transparent',cursor:m?'default':'pointer',opacity:m?0.6:1,transition:'all .2s',color:'var(--tp)'}},f+(m?' \u2713':''))})
+      )
+    )
+  );
+}
+
+// ── Number Blitz ──
+function NumberBlitz({onComplete}){
+  const [qs]=useState(()=>shuffle(NUMBER_BLITZ));
+  const [idx,setIdx]=useState(0),[inp,setInp]=useState(''),[sc,setSc]=useState(0),[tot,setTot]=useState(0),[fb,setFb]=useState(null),[tl,setTl]=useState(60),[run,setRun]=useState(false),[dn,setDn]=useState(false);
+  const ref=useRef(),iref=useRef();
+  useEffect(()=>{if(run&&tl>0){ref.current=setInterval(()=>setTl(t=>{if(t<=1){clearInterval(ref.current);setDn(true);setRun(false);return 0}return t-1}),1000)}return()=>clearInterval(ref.current)},[run,tl]);
+  useEffect(()=>{if(dn&&onComplete)onComplete(sc)},[dn]);
+  const chk=()=>{const q=qs[idx%qs.length];const ok=q.accept.some(a=>inp.trim().toLowerCase().includes(a.toLowerCase()));if(ok)setSc(s=>s+1);setTot(t=>t+1);setFb(ok?'\u2713':'Answer: '+q.a);setTimeout(()=>{setFb(null);setInp('');setIdx(i=>i+1);iref.current&&iref.current.focus()},ok?400:1200)};
+  if(dn) return React.createElement('div',{style:{textAlign:'center',padding:'2rem'}},
+    React.createElement('div',{style:{fontSize:48}},sc),
+    React.createElement('div',{style:{fontSize:14,color:'var(--ts2)',fontStyle:'italic'}},'correct out of '+tot+' in 60 seconds'),
+    React.createElement('button',{className:'pill on',onClick:()=>{setIdx(0);setSc(0);setTot(0);setTl(60);setDn(false);setFb(null);setInp('')},style:{marginTop:16,background:'var(--gold)',borderColor:'var(--gold)'}},'Play again')
+  );
+  if(!run) return React.createElement('div',{style:{textAlign:'center',padding:'2rem'}},
+    React.createElement('div',{style:{fontSize:20,marginBottom:8}},'\u26a1 Number Blitz'),
+    React.createElement('div',{style:{fontSize:13,color:'var(--ts2)',fontStyle:'italic',marginBottom:16}},'60 seconds. Type the key stat. How many can you get?'),
+    React.createElement('button',{className:'pill on',onClick:()=>setRun(true),style:{background:'var(--gold)',borderColor:'var(--gold)'}},'Start \u2192')
+  );
+  const q=qs[idx%qs.length];
+  return React.createElement('div',null,
+    React.createElement('div',{style:{display:'flex',justifyContent:'space-between',fontSize:12,color:'var(--ts2)',fontStyle:'italic',marginBottom:8}},
+      React.createElement('span',null,sc+'/'+tot+' correct'),
+      React.createElement('span',{style:{color:tl<10?'var(--coral)':'var(--ts2)',fontWeight:tl<10?700:400}},tl+'s')
+    ),
+    React.createElement('div',{className:'progress-bar'},React.createElement('div',{className:'progress-fill',style:{width:(tl/60*100)+'%',background:'var(--gold)'}})),
+    React.createElement('div',{style:{fontSize:16,fontWeight:700,marginBottom:16,lineHeight:1.5,marginTop:10}},q.q),
+    React.createElement('div',{style:{display:'flex',gap:8}},
+      React.createElement('input',{ref:iref,value:inp,onChange:e=>setInp(e.target.value),onKeyDown:e=>e.key==='Enter'&&chk(),placeholder:'Type answer...',autoFocus:true,style:{flex:1,padding:'8px 12px',fontSize:14,borderRadius:10,border:'1.5px solid var(--bd)',outline:'none'}}),
+      React.createElement('button',{className:'pill on',onClick:chk,style:{background:'var(--gold)',borderColor:'var(--gold)'}},'Go')
+    ),
+    fb && React.createElement('div',{style:{marginTop:10,fontSize:14,fontWeight:700,color:fb==='\u2713'?'var(--green)':'var(--coral)'}},fb)
+  );
+}
+
+// ── Connection Challenge ──
+function ConnectionChallenge({onView}){
+  const [pairs]=useState(()=>shuffle(CONNECTION_PAIRS));
+  const [idx,setIdx]=useState(0),[sh,setSh]=useState(false),[tl,setTl]=useState(90),[run,setRun]=useState(false);
+  const ref=useRef();
+  useEffect(()=>{if(run&&tl>0){ref.current=setInterval(()=>setTl(t=>{if(t<=1){clearInterval(ref.current);setRun(false);return 0}return t-1}),1000)}return()=>clearInterval(ref.current)},[run,tl]);
+  const p=pairs[idx%pairs.length];
+  const next=()=>{onView&&onView();setIdx(i=>i+1);setSh(false);setTl(90);setRun(true)};
+  if(!run&&tl===90) return React.createElement('div',{style:{textAlign:'center',padding:'2rem'}},
+    React.createElement('div',{style:{fontSize:20,marginBottom:8}},'\uD83D\uDD17 Connection Challenge'),
+    React.createElement('div',{style:{fontSize:13,color:'var(--ts2)',fontStyle:'italic',marginBottom:16}},'Two papers appear. How do they relate? 90 seconds per pair.'),
+    React.createElement('button',{className:'pill on',onClick:()=>setRun(true)},'Start \u2192')
+  );
+  return React.createElement('div',null,
+    React.createElement('div',{style:{display:'flex',justifyContent:'space-between',fontSize:12,color:'var(--ts2)',fontStyle:'italic',marginBottom:14}},
+      React.createElement('span',null,'Pair '+(idx%pairs.length+1)+'/'+pairs.length),
+      React.createElement('span',{style:{color:tl<15?'var(--coral)':'var(--ts2)'}},tl+'s')
+    ),
+    React.createElement('div',{style:{padding:'14px 16px',borderRadius:10,background:'var(--accentL)',border:'1.5px solid var(--accent)',marginBottom:10}},
+      React.createElement('div',{style:{fontSize:10,textTransform:'uppercase',letterSpacing:2,color:'var(--accent)',marginBottom:6}},'Paper A'),
+      React.createElement('div',{style:{fontSize:14,fontWeight:700,color:'var(--tp)'}},p.paper1)
+    ),
+    React.createElement('div',{style:{textAlign:'center',fontSize:18,color:'var(--ts2)',margin:'4px 0'}},'\u00d7'),
+    React.createElement('div',{style:{padding:'14px 16px',borderRadius:10,background:'var(--goldL)',border:'1.5px solid var(--gold)',marginBottom:16}},
+      React.createElement('div',{style:{fontSize:10,textTransform:'uppercase',letterSpacing:2,color:'var(--gold)',marginBottom:6}},'Paper B'),
+      React.createElement('div',{style:{fontSize:14,fontWeight:700,color:'var(--tp)'}},p.paper2)
+    ),
+    !sh ? React.createElement('div',{style:{textAlign:'center'}},React.createElement('button',{className:'pill on',onClick:()=>setSh(true),style:{background:'var(--green)',borderColor:'var(--green)'}},'Reveal connection'))
+    : React.createElement('div',null,
+        React.createElement('div',{style:{padding:'14px 16px',borderRadius:10,background:'var(--greenL)',border:'1.5px solid var(--green)',fontSize:13,lineHeight:1.7,marginBottom:14,color:'var(--tp)'}},p.hint),
+        React.createElement('div',{style:{textAlign:'center'}},React.createElement('button',{className:'pill on',onClick:next},'Next pair \u2192'))
+      )
+  );
+}
+
+// ── T/F/U Showdown ──
+function TFUShowdown({onAnswer}){
+  const [stmts]=useState(()=>shuffle(TFU_STATEMENTS));
+  const [idx,setIdx]=useState(0),[ch,setCh]=useState(null),[sh,setSh]=useState(false),[sc,setSc]=useState(0),[tot,setTot]=useState(0);
+  const s=stmts[idx%stmts.length];
+  const chk=v=>{setCh(v);setSh(true);setTot(t=>t+1);const correct=v===s.verdict;if(correct)setSc(c=>c+1);onAnswer&&onAnswer(correct)};
+  const next=()=>{setIdx(i=>i+1);setCh(null);setSh(false)};
+  return React.createElement('div',null,
+    React.createElement('div',{style:{fontSize:12,color:'var(--ts2)',fontStyle:'italic',marginBottom:14}},'#'+(idx%stmts.length+1)+'/'+stmts.length+' \u00b7 Score: '+sc+'/'+tot),
+    React.createElement('div',{className:'progress-bar'},React.createElement('div',{className:'progress-fill',style:{width:((idx%stmts.length+1)/stmts.length*100)+'%',background:'var(--gold)'}})),
+    React.createElement('div',{style:{padding:'16px 18px',borderRadius:12,background:'var(--goldL)',border:'1.5px solid var(--gold)',fontSize:15,lineHeight:1.7,fontWeight:700,marginBottom:16,marginTop:10,color:'var(--tp)'}},'\u201c'+s.statement+'\u201d'),
+    !sh ? React.createElement('div',{style:{display:'flex',gap:8,justifyContent:'center'}},
+      ['True','False','Uncertain'].map(v=>React.createElement('button',{key:v,className:'pill',onClick:()=>chk(v),style:{fontSize:13}},v))
+    )
+    : React.createElement('div',null,
+        React.createElement('div',{style:{marginBottom:10,fontSize:14,fontWeight:700,color:ch===s.verdict?'var(--green)':'var(--coral)'}},
+          'You said: '+ch+' '+(ch===s.verdict?'\u2713':'\u2717')+' \u00b7 Correct: '+s.verdict
+        ),
+        React.createElement('div',{style:{padding:'12px 16px',borderRadius:10,background:'var(--greenL)',border:'1.5px solid var(--green)',fontSize:13,lineHeight:1.7,marginBottom:14,color:'var(--tp)'}},
+          React.createElement('strong',null,'Explanation: '),s.explanation
+        ),
+        React.createElement('div',{style:{textAlign:'center'}},React.createElement('button',{className:'pill on',onClick:next},'Next \u2192'))
+      )
+  );
+}
+
+// ── Practice Exam ──
+function PracticeExam({questions}){
+  const allQs = shuffle(questions).slice(0,20);
+  const [idx,setIdx]=useState(0),[answers,setAnswers]=useState({}),[submitted,setSubmitted]=useState(false),[showExplanation,setShowExplanation]=useState({});
+  if(submitted){
+    const score = allQs.reduce((s,q,i)=>s+(answers[i]===q.answer?1:0),0);
+    return React.createElement('div',null,
+      React.createElement('div',{style:{textAlign:'center',padding:'1rem 0 1.5rem'}},
+        React.createElement('div',{style:{fontSize:42}},score+'/'+allQs.length),
+        React.createElement('div',{style:{fontSize:14,color:'var(--ts2)',fontStyle:'italic'}},Math.round(score/allQs.length*100)+'% \u00b7 '+(score>=18?'Excellent!':score>=14?'Good - review missed ones':score>=10?'Keep studying!':'Hit the flashcards first'))
+      ),
+      allQs.map((q,i)=>{
+        const correct = answers[i]===q.answer;
+        return React.createElement('div',{key:i,style:{padding:'12px 14px',marginBottom:8,borderRadius:10,border:'1.5px solid '+(correct?'var(--green)':'var(--coral)'),background:correct?'var(--greenL)':'var(--coralL)'}},
+          React.createElement('div',{style:{fontSize:13,fontWeight:700,marginBottom:4,color:'var(--tp)'}},(i+1)+'. '+q.question),
+          React.createElement('div',{style:{fontSize:12,color:correct?'var(--green)':'var(--coral)'}},correct?'\u2713 Correct':'Your answer: '+q.options[answers[i]]+' \u2192 Correct: '+q.options[q.answer])
+        );
+      }),
+      React.createElement('div',{style:{textAlign:'center',marginTop:16}},
+        React.createElement('button',{className:'pill on',onClick:()=>{setIdx(0);setAnswers({});setSubmitted(false);setShowExplanation({})}},'Retake exam')
+      )
+    );
+  }
+  return React.createElement('div',null,
+    React.createElement('div',{style:{fontSize:13,color:'var(--ts2)',fontStyle:'italic',marginBottom:8}},'Practice Exam \u00b7 '+allQs.length+' questions \u00b7 '+Object.keys(answers).length+' answered'),
+    React.createElement('div',{className:'progress-bar'},React.createElement('div',{className:'progress-fill',style:{width:(Object.keys(answers).length/allQs.length*100)+'%',background:'var(--blue)'}})),
+    allQs.map((q,i)=>React.createElement('div',{key:i,style:{padding:'14px',marginBottom:12,borderRadius:10,border:'1px solid var(--bd)',background:i===idx?'var(--bg3)':'transparent'}},
+      React.createElement('div',{style:{fontSize:13,fontWeight:700,marginBottom:8,color:'var(--tp)'}},(i+1)+'. '+q.question),
+      q.options.map((opt,j)=>React.createElement('div',{key:j,onClick:()=>{const a={...answers};a[i]=j;setAnswers(a)},style:{padding:'6px 10px',marginBottom:4,borderRadius:6,fontSize:13,border:'1px solid '+(answers[i]===j?'var(--accent)':'var(--bd)'),background:answers[i]===j?'var(--accentL)':'transparent',cursor:'pointer',color:'var(--tp)'}},opt))
+    )),
+    React.createElement('div',{style:{textAlign:'center',marginTop:16}},
+      React.createElement('button',{className:'pill on',onClick:()=>setSubmitted(true),disabled:Object.keys(answers).length<allQs.length,style:{opacity:Object.keys(answers).length<allQs.length?0.4:1}},'Submit exam ('+Object.keys(answers).length+'/'+allQs.length+' answered)')
+    )
+  );
+}
+
+// ── Main App ──
+function App(){
+  const [mode,setMode]=useState('learn'),[theme,setTheme]=useState('all');
+  const [stats,updateStats]=useProgress();
+  const fc=theme==='all'?FLASHCARDS:FLASHCARDS.filter(c=>c.theme===theme);
+  const fq=theme==='all'?QUIZ_QUESTIONS:QUIZ_QUESTIONS.filter(q=>q.theme===theme);
+
+  const modes=[
+    {id:'learn',label:'Learn',e:'\uD83D\uDCD6'},
+    {id:'flashcards',label:'Cards',e:'\uD83C\uDFB4'},
+    {id:'quiz',label:'Quiz',e:'\uD83C\uDFAF'},
+    {id:'exam',label:'Exam',e:'\uD83D\uDCDD'},
+    {id:'matchup',label:'Match',e:'\uD83E\uDDE9'},
+    {id:'blitz',label:'Blitz',e:'\u26A1'},
+    {id:'connection',label:'Connect',e:'\uD83D\uDD17'},
+    {id:'tfu',label:'T/F/U',e:'\u2696\uFE0F'},
+    {id:'timer',label:'Timer',e:'\u23F1\uFE0F'},
+    {id:'stats',label:'Progress',e:'\uD83D\uDCCA'},
+  ];
+  const needsFilter=['learn','flashcards','quiz','exam'].includes(mode);
+
+  return React.createElement('div',{style:{maxWidth:660,margin:'0 auto',padding:'0 4px'}},
+    React.createElement('div',{style:{textAlign:'center',padding:'1.5rem 0 .75rem'}},
+      React.createElement('div',{style:{fontSize:13,textTransform:'uppercase',letterSpacing:3,color:'var(--accent)',marginBottom:4}},'\u2727 UCSB Winter 2026 \u2727'),
+      React.createElement('div',{style:{fontSize:28,fontWeight:700,letterSpacing:-.5}},'ECON 151 Study Tool'),
+      React.createElement('div',{style:{fontSize:13,color:'var(--ts2)',fontStyle:'italic',marginTop:4}},FLASHCARDS.length+' flashcards \u00b7 '+QUIZ_QUESTIONS.length+' quiz Qs \u00b7 5 games \u00b7 practice exam')
+    ),
+    React.createElement('div',{style:{display:'flex',gap:3,justifyContent:'center',padding:'8px 0',flexWrap:'wrap'}},
+      modes.map(m=>React.createElement('button',{key:m.id,className:'pill'+(mode===m.id?' on':''),onClick:()=>setMode(m.id)},m.e+' '+m.label))
+    ),
+    needsFilter && React.createElement('div',{style:{display:'flex',gap:3,padding:'4px 0 14px',flexWrap:'wrap',justifyContent:'center'}},
+      THEMES.map(t=>React.createElement('button',{key:t.id,className:'thpill'+(theme===t.id?' on':''),onClick:()=>setTheme(t.id)},t.label))
+    ),
+    React.createElement('div',{className:'card'},
+      mode==='learn' && React.createElement(Learn,{theme}),
+      mode==='flashcards' && React.createElement(Flashcards,{cards:fc,onStudy:()=>updateStats('flashcardsStudied',v=>v+1)}),
+      mode==='quiz' && React.createElement(Quiz,{questions:fq,onComplete:(s,t)=>{updateStats('quizzesTaken',v=>v+1);updateStats('quizHighScore',v=>Math.max(v,Math.round(s/t*100)))}}),
+      mode==='exam' && React.createElement(PracticeExam,{questions:fq}),
+      mode==='matchup' && React.createElement(Matchup,{onComplete:()=>updateStats('matchupsCompleted',v=>v+1)}),
+      mode==='blitz' && React.createElement(NumberBlitz,{onComplete:(s)=>updateStats('blitzHighScore',v=>Math.max(v,s))}),
+      mode==='connection' && React.createElement(ConnectionChallenge,{onView:()=>updateStats('connectionsViewed',v=>v+1)}),
+      mode==='tfu' && React.createElement(TFUShowdown,{onAnswer:(c)=>{updateStats('tfuTotal',v=>v+1);if(c)updateStats('tfuCorrect',v=>v+1)}}),
+      mode==='timer' && React.createElement(Pomodoro,null),
+      mode==='stats' && React.createElement('div',{style:{padding:'1rem'}},
+        React.createElement('div',{style:{fontSize:18,fontWeight:700,marginBottom:16,textAlign:'center'}},'Your progress'),
+        [{label:'Flashcards studied',val:stats.flashcardsStudied,color:'var(--accent)'},
+         {label:'Quizzes completed',val:stats.quizzesTaken,color:'var(--blue)'},
+         {label:'Quiz high score',val:stats.quizHighScore+'%',color:'var(--green)'},
+         {label:'Blitz high score',val:stats.blitzHighScore+' in 60s',color:'var(--gold)'},
+         {label:'Matchups completed',val:stats.matchupsCompleted,color:'var(--coral)'},
+         {label:'T/F/U accuracy',val:stats.tfuTotal>0?Math.round(stats.tfuCorrect/stats.tfuTotal*100)+'%':'--',color:'var(--accent)'},
+         {label:'Connections viewed',val:stats.connectionsViewed+'/'+CONNECTION_PAIRS.length,color:'var(--blue)'},
+        ].map((item,i)=>React.createElement('div',{key:i,style:{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 14px',marginBottom:6,borderRadius:8,background:'var(--bg2)'}},
+          React.createElement('span',{style:{fontSize:13,color:'var(--ts2)'}},item.label),
+          React.createElement('span',{style:{fontSize:15,fontWeight:700,color:item.color}},item.val)
+        ))
+      )
+    ),
+    React.createElement('div',{style:{textAlign:'center',padding:'14px 0',fontSize:12,color:'var(--tt)',fontStyle:'italic'}},'Final Exam: Wed Mar 18, 7:30 PM \u00b7 You\u2019ve got this \u2727')
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+</script>
+</body>
+</html>
